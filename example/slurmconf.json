@@ -15,6 +15,7 @@
         "program": "--executor-cores 1 --executor-memory 20G example/dummyprogram.py -p 12"
     },
     "workers": {
+        "amount": 6,
         "sbatch": [
             {"id": "--time", "value": "00:40:00"},
             {"id": "--nodes", "value": 1},
