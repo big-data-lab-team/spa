@@ -27,6 +27,7 @@ def main():
         
         # start master
         master.write("export SPARK_MASTER=$(grep -Po 'spark://.*' $($SPARK_HOME/sbin/start-master.sh | grep -Po '/.*out')) \n")
+        master.write("echo $SPARK_MASTER > {}/master.txt\n".format(conf["logdir"]))
 
         # run master
         master.write("srun -n 1 -N 1 $SPARK_HOME/bin/spark-submit --master $SPARK_MASTER {}\n".format(conf["master"]["program"]))
