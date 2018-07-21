@@ -71,7 +71,7 @@ def main():
             if walltime != None:
                 time = sum([a*b for a,b in zip([3600,60,1], [int(i) for i in walltime.split(":")])])
 
-            worker.write("sleep {}".format(time))
+            worker.write("while true; do sleep 5; done\n")
             
             
         # SLURM batch submit workers
