@@ -5,6 +5,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='Pilot-Agent scheduling for SLURM')
     parser.add_argument('conf', type=argparse.FileType('r'), help="SLURM batch script (JSON)")
+    parser.add_argument('-D', '--no_submit', action='store_true', help="Create but do not submit sbatch scripts" )
     args = parser.parse_args()
 
     conf = None
@@ -36,9 +37,10 @@ def main():
         # stop program
         master.write("$SPARK_HOME/sbin/stop-all.sh")        
    
+    if not args.no_submit:
     # SLURM batch submit master
-    process = subprocess.Popen(['sbatch', master_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    process.communicate()
+        process = subprocess.Popen(['sbatch', master_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process.communicate()
          
     for i in range(conf["workers"]["amount"]):
         worker_fn = "worker-{0}-{1}.sh".format(program_start, i)
@@ -67,16 +69,21 @@ def main():
 
             # start worker
             worker.write("$SPARK_HOME/sbin/start-slave.sh $MASTER_URI\n")
+            worker.write("export WORKER_PID=$(ls /tmp | grep -Po 'org.apache.spark.deploy.worker.Worker-\d+.pid' | grep -Po '\d+')\n")
+
 
             if walltime != None:
                 time = sum([a*b for a,b in zip([3600,60,1], [int(i) for i in walltime.split(":")])])
 
-            worker.write("while true; do sleep 5; done\n")
+            worker.write("while [[ $($SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID) == *\"is running.\" ]]; do sleep 5; done\n")
+            worker.write("$SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID")
             
             
         # SLURM batch submit workers
-        process = subprocess.Popen(['sbatch', worker_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.communicate()
+
+        if not args.no_submit:
+            process = subprocess.Popen(['sbatch', worker_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process.communicate()
    
         
         
