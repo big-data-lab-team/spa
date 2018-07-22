@@ -84,7 +84,7 @@ def main():
                 time = sum([a*b for a,b in zip([3600,60,1], [int(i) for i in walltime.split(":")])])
 
             worker.write("while [[ $($SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID) == *\"is running.\" ]]; do sleep 5; done\n")
-            worker.write("$SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID")
+            worker.write("$SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID\n")
             worker.write("echo end $(date +%s.%N) >> {}\n".format(worker_out))
             
             
