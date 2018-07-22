@@ -38,7 +38,8 @@ def main():
         master.write("srun -n 1 -N 1 $SPARK_HOME/bin/spark-submit --master $MASTER_URI {}\n".format(conf["master"]["program"]))
         
         # stop program
-        master.write("$SPARK_HOME/sbin/stop-all.sh\n") 
+        master.write("$SPARK_HOME/sbin/stop-master.sh\n")
+        master.write("echo 'TERMINATED' >> {}\n".format(master_log))
         master.write("echo end $(date +%s.%N) >> {}\n".format(master_out))
    
     if not args.no_submit:
@@ -83,7 +84,8 @@ def main():
             if walltime != None:
                 time = sum([a*b for a,b in zip([3600,60,1], [int(i) for i in walltime.split(":")])])
 
-            worker.write("while [[ $($SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID) == *\"is running.\" ]]; do sleep 5; done\n")
+            worker.write("while [[ $(tail -n 1 {}) != \"TERMINATED\" ]]; do sleep 5; done\n".format(master_log))
+            worker.write("$SPARK_HOME/sbin/stop-slave.sh\n")
             worker.write("$SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID\n")
             worker.write("echo end $(date +%s.%N) >> {}\n".format(worker_out))
             
