@@ -1,3 +1,4 @@
+from os import path as op
 import argparse, time, json, subprocess
 from datetime import datetime
 
@@ -14,7 +15,7 @@ def main():
 
     program_start = datetime.now().strftime("%Y%m%d-%H%M%S%f")
     master_fn = "master-{}.sh".format(program_start)
-    master_log = "{0}/master-{1}.txt".format(conf["logdir"], program_start)
+    master_log = op.join(conf["logdir"], "master-{}.txt".format(program_start)
     
     with open(master_fn, "w") as master:
         master.write("#!/bin/bash\n")
@@ -46,7 +47,7 @@ def main():
          
     for i in range(conf["workers"]["amount"]):
         worker_fn = "worker-{0}-{1}.sh".format(program_start, i)
-        worker_out = "worker-{0}-{1}.out".format(program_start, i)    
+        worker_out = op.join(conf["logdir"], "worker-{0}-{1}.out".format(program_start, i))    
 
         walltime = None
         time = None
