@@ -16,6 +16,7 @@ def main():
     program_start = datetime.now().strftime("%Y%m%d-%H%M%S%f")
     master_fn = "master-{}.sh".format(program_start)
     master_log = op.join(conf["logdir"], "master-{}.txt".format(program_start))
+    master_out = op.join(conf["logdir"], "master-{}-out.txt".format(program_start))
     
     with open(master_fn, "w") as master:
         master.write("#!/bin/bash\n")
@@ -24,7 +25,7 @@ def main():
             master.write("#SBATCH {0}={1}\n".format(param["id"], param["value"])) 
 
         master.write("\n\n")
-        master.write("echo start $(date +%s.%N) >> {}\n".format(master_log))
+        master.write("echo start $(date +%s.%N) > {}\n".format(master_out))
     
         for path in conf["path"]:
             master.write("export {0}={1}\n".format(path["id"], path["value"])) 
@@ -38,7 +39,7 @@ def main():
         
         # stop program
         master.write("$SPARK_HOME/sbin/stop-all.sh")        
-        master.write("echo end $(date +%s.%N) >> {}\n".format(master_log))
+        master.write("echo end $(date +%s.%N) >> {}\n".format(master_out))
    
     if not args.no_submit:
     # SLURM batch submit master
@@ -71,7 +72,8 @@ def main():
             worker.write("while [ ! -f {} ]; do sleep 10; done \n".format(master_log))
             
             # get master ip
-            worker.write("export MASTER_URI=$(cat {})\n".format(master_log))
+            worker.write("export MASTER_URI=$(head -n 1 {})\n".format(master_log))
+            worker.write("echo $MASTER_URI\n")
 
             # start worker
             worker.write("$SPARK_HOME/sbin/start-slave.sh $MASTER_URI\n")
