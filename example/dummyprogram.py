@@ -3,7 +3,7 @@ from random import randint
 import argparse, time
 
 def sleep_task(x):
-    time.sleep(randint(0, 2))
+    time.sleep(1)
     return (randint(0, 5), x)
 
 def main():
