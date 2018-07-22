@@ -15,7 +15,7 @@ def main():
 
     program_start = datetime.now().strftime("%Y%m%d-%H%M%S%f")
     master_fn = "master-{}.sh".format(program_start)
-    master_log = op.join(conf["logdir"], "master-{}.txt".format(program_start)
+    master_log = op.join(conf["logdir"], "master-{}.txt".format(program_start))
     
     with open(master_fn, "w") as master:
         master.write("#!/bin/bash\n")
