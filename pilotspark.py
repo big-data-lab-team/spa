@@ -38,7 +38,7 @@ def main():
         master.write("srun -n 1 -N 1 $SPARK_HOME/bin/spark-submit --master $MASTER_URI {}\n".format(conf["master"]["program"]))
         
         # stop program
-        master.write("$SPARK_HOME/sbin/stop-all.sh")        
+        master.write("$SPARK_HOME/sbin/stop-all.sh\n") 
         master.write("echo end $(date +%s.%N) >> {}\n".format(master_out))
    
     if not args.no_submit:
