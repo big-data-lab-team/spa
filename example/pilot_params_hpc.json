@@ -1,0 +1,11 @@
+{
+    "logdir": "/home/vhayots/projects/def-glatard/vhayots/sparkpilot/logs",
+    "SLURM_CONF_GLOBAL": {
+        "account": "def-glatard"
+        "time": "00:20:00",
+        "nodes": 5,
+        "mem": "20G",
+        "cpus-per-task": 8,
+        "ntasks-per-node": 1
+    }
+}
