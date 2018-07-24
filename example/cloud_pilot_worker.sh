@@ -1,10 +1,4 @@
 #!/bin/bash
-#SBATCH --time=$wrkr_time
-#SBATCH --nodes=$wrkr_nodes
-#SBATCH --mem=$wrkr_mem
-#SBATCH --cpus-per-task=$wrkr_cpus
-#SBATCH --ntasks-per-node=$wrkr_tasks
-
 
 hostname > $wrkr_log
 echo start $(date +%s.%N) >> $wrkr_log
