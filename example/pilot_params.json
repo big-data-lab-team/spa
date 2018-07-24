@@ -1,0 +1,21 @@
+{
+
+    "logdir": "/mnt/vhs/sparkpilot/logs",
+    "num_workers": 1,
+    "SLURM_CONF_GLOBAL": {
+        "time": "00:20:00",
+        "nodes": 1,
+        "mem": "20G",
+        "cpus-per-task": 8,
+        "ntasks-per-node": 1
+    },
+    "MASTER": {
+        "mstr_spark": "/home/centos/spark-2.3.1-bin-hadoop2.7",
+        "mstr_java": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64/jre",
+        "spscript": "'example/dummyprogram.py -p 12'"
+    },
+    "WORKER": {
+        "wrkr_spark": "/home/centos/spark-2.3.1-bin-hadoop2.7",
+        "wrkr_java": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64/jre"
+    }
+}

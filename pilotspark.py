@@ -1,102 +1,45 @@
 from os import path as op
 import argparse, time, json, subprocess
 from datetime import datetime
+from slurmpy import Slurm
 
 def main():
 
     parser = argparse.ArgumentParser(description='Pilot-Agent scheduling for SLURM')
-    parser.add_argument('conf', type=argparse.FileType('r'), help="SLURM batch script (JSON)")
+    parser.add_argument('master', type=str, help="SLURM batch script master template")
+    parser.add_argument('worker', type=str, help="SLURM batch script worker template")
+    parser.add_argument('params', type=argparse.FileType('r'), help="SLURM batch script params (JSON)")
     parser.add_argument('-D', '--no_submit', action='store_true', help="Create but do not submit sbatch scripts" )
     args = parser.parse_args()
 
     conf = None
-    with args.conf as f:
+    with args.params as f:
         conf = json.load(f)
 
+    submit_func = "bash" if args.no_submit else "sbatch"
+
+    s = Slurm("pilotspark", conf["SLURM_CONF_GLOBAL"])
+
     program_start = datetime.now().strftime("%Y%m%d-%H%M%S%f")
-    master_fn = "master-{}.sh".format(program_start)
-    master_log = op.join(conf["logdir"], "master-{}.txt".format(program_start))
-    master_out = op.join(conf["logdir"], "master-{}-out.txt".format(program_start))
-    
-    with open(master_fn, "w") as master:
-        master.write("#!/bin/bash\n")
-        
-        for param in conf["master"]["sbatch"]:
-            master.write("#SBATCH {0}={1}\n".format(param["id"], param["value"])) 
 
-        master.write("\n\n")
-        master.write("echo start $(date +%s.%N) > {}\n".format(master_out))
-    
-        for path in conf["path"]:
-            master.write("export {0}={1}\n".format(path["id"], path["value"])) 
+    if not "mstr_bench" in conf["MASTER"]:
+        conf["MASTER"]["mstr_bench"] = op.join(conf["logdir"], "master-{}-benchmarks.out".format(program_start))
 
-        # start master
-        master.write("export MASTER_URI=$(grep -Po 'spark://.*' $($SPARK_HOME/sbin/start-master.sh | grep -Po '/.*out')) \n")
-        master.write("echo $MASTER_URI > {}\n".format(master_log))
+    if not "mstr_log" in conf["MASTER"]:
+        conf["MASTER"]["mstr_log"] = op.join(conf["logdir"], "master-{}.out".format(program_start))
 
-        # run master
-        master.write("srun -n 1 -N 1 $SPARK_HOME/bin/spark-submit --master $MASTER_URI {}\n".format(conf["master"]["program"]))
-        
-        # stop program
-        master.write("$SPARK_HOME/sbin/stop-master.sh\n")
-        master.write("echo 'TERMINATED' >> {}\n".format(master_log))
-        master.write("echo end $(date +%s.%N) >> {}\n".format(master_out))
    
-    if not args.no_submit:
     # SLURM batch submit master
-        process = subprocess.Popen(['sbatch', master_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.communicate()
-         
-    for i in range(conf["workers"]["amount"]):
-        worker_fn = "worker-{0}-{1}.sh".format(program_start, i)
-        worker_out = op.join(conf["logdir"], "worker-{0}-{1}.out".format(program_start, i))    
-
-        walltime = None
-        time = None
-        with open(worker_fn, "w") as worker:
-            worker.write("#!/bin/bash\n")
-
-            for param in conf["workers"]["sbatch"]:
-                worker.write("#SBATCH {0}={1}\n".format(param["id"], param["value"]))
-                
-                if param["id"] == "--time":
-                    walltime = param["value"]
-
-            worker.write("\n\n")
-            worker.write("hostname > {}\n".format(worker_out))
-            worker.write("echo start $(date +%s.%N) >> {}\n".format(worker_out))
-
-            for path in conf["path"]:
-                worker.write("export {0}={1}\n".format(path["id"], path["value"]))
-
-            # wait until master ip logfile has been created
-            worker.write("while [ ! -f {} ]; do sleep 10; done \n".format(master_log))
-            
-            # get master ip
-            worker.write("export MASTER_URI=$(head -n 1 {})\n".format(master_log))
-            worker.write("echo $MASTER_URI\n")
-
-            # start worker
-            worker.write("$SPARK_HOME/sbin/start-slave.sh $MASTER_URI\n")
-            worker.write("export WORKER_PID=$(ls /tmp | grep -Po 'org.apache.spark.deploy.worker.Worker-\d+.pid' | grep -Po '\d+')\n")
-
-
-            if walltime != None:
-                time = sum([a*b for a,b in zip([3600,60,1], [int(i) for i in walltime.split(":")])])
-
-            worker.write("while [[ $(tail -n 1 {}) != \"TERMINATED\" ]]; do sleep 5; done\n".format(master_log))
-            worker.write("$SPARK_HOME/sbin/stop-slave.sh\n")
-            worker.write("$SPARK_HOME/sbin/spark-daemon.sh status org.apache.spark.deploy.worker.Worker $WORKER_PID\n")
-            worker.write("echo end $(date +%s.%N) >> {}\n".format(worker_out))
-            
+    s.run(args.master, cmd_kwargs=conf["MASTER"], _cmd=submit_func)
+  
+    if not "mstr_log" in conf["WORKER"]:
+        conf["WORKER"]["mstr_log"] = conf["MASTER"]["mstr_log"]
+       
+    for i in range(conf["num_workers"]):
+        conf["WORKER"]["wrkr_log"] = op.join(conf["logdir"], "worker-{0}-{1}.out".format(program_start, i))   
             
         # SLURM batch submit workers
-
-        if not args.no_submit:
-            process = subprocess.Popen(['sbatch', worker_fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            process.communicate()
-   
-        
+        s.run(args.worker, cmd_kwargs=conf["WORKER"], _cmd=submit_func)
         
         
 

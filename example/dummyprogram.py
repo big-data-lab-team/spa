@@ -12,7 +12,7 @@ def main():
     sc = SparkContext.getOrCreate(conf=conf)
 
     parser = argparse.ArgumentParser(description='Dummy program to help test pilot scheduling')
-    parser.add_argument('-p', '--partitions', type=int, help="number of partitions")
+    parser.add_argument('-p', '--partitions', type=int, default=5, help="number of partitions")
     args = parser.parse_args()
 
     waitRDD = sc.parallelize([x for x in range(0,1000)], args.partitions) \
