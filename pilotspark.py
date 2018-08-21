@@ -32,6 +32,9 @@ def main():
         conf["COMPUTE"]["mstr_log"] = op.join(conf["logdir"], "master-{}.out".format(program_start))
 
     conf["COMPUTE"]["mstr_lock"] = op.join(conf["logdir"], "master-{}.lock".format(program_start))
+    
+    conf["COMPUTE"]["logdir"] = conf["logdir"]   
+
     for i in range(conf["num_nodes"]):
             
         # SLURM batch submit workers
