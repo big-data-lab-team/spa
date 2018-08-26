@@ -1,17 +1,24 @@
 {
 
-    "logdir": "/home/vhayots/projects/def-glatard/vhayots/sparkpilot/logs",
+    "logdir": "/scratch/vhayots/sparkpilot/logs",
     "num_nodes": 2,
     "SLURM_CONF_GLOBAL": {
 	"account": "def-glatard",
-        "time": "00:20:00",
+        "time": "00:05:00",
         "nodes": 1,
         "mem": "20G",
-        "cpus-per-task": 8,
+        "cpus-per-task": 1,
         "ntasks-per-node": 1
     },
+    "DRIVER": {
+	"slurm_alloc": ["salloc", "--time=00:05:00", "--ntasks=1", "--nodes=1", "--account=def-glatard", "--mem=20G", "--cpus-per-task=1"],
+	"modules": ["spark/2.3.0"],
+	"program": "/scratch/vhayots/sparkpilot/example/dummyprogram.py -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
+    },
     "COMPUTE": {
-	"head_ip": "vhayots@cedar5.cedar.computecanada.ca",
-	"spscript": "'/home/vhayots/projects/def-glatard/vhayots/sparkpilot/example/dummyprogram.py -p 12 -c /home/vhayots/projects/def-glatard/vhayots/sparkpilot/checkpoints'"
+	"head_ip": "cedar1.cedar.computecanada.ca",
+	"spscript": "'/scratch/vhayots/sparkpilot/example/dummyprogram.py -p 12 -c /scratch/vhayots/sparkpilot/checkpoints'",
+	"HADOOP_HOME": "/scratch/vhayots/sparkpilot/hadoop-2.7.7",
+	"datanode": "$SLURM_TMPDIR/hdfs/data/dataNode"
     }
 }
