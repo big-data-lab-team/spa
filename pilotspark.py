@@ -65,13 +65,17 @@ def main():
     p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
     for module in conf["DRIVER"]["modules"]:
         p.stdin.write("module load {}\n".format(module).encode('utf-8'))
-
+    
+    p.stdin.write("echo start $(date +%s.%N)\n".encode('utf-8'))
     program = ("spark-submit --master {0} --executor-cores=${{SLURM_CPUS_PER_TASK}} "
                "--executor-memory=${{SLURM_MEM_PER_NODE}}M {1}\n").format(master_url, conf["DRIVER"]["program"])
 
     p.stdin.write(program.encode('utf-8'))
-    p.stdin.write("echo 'SUCCEEDED' >> {}".format(conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
+    
     out = fr.read()
+
+    p.stdin.write("echo end $(date +%s.%N)\n".encode('utf-8'))
+    p.stdin.write("echo 'SUCCEEDED' >> {}".format(conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
     fw.close()
     fr.close()
 
