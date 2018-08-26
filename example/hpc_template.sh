@@ -18,7 +18,6 @@ if [ ! -f $mstr_log ]; then
 		sleep 5
 	done
         echo $MASTER_URI > $mstr_log
-        #ssh $head_ip "spark-submit --master $MASTER_URI --executor-cores=${SLURM_CPUS_PER_TASK} --executor-memory=${SLURM_MEM_PER_NODE}M $spscript&"
     else
         while [ ! -f $mstr_log ]; do sleep 5; done
         MASTER_URI=$(head -n 1 $mstr_log)
@@ -31,9 +30,7 @@ echo 'RUNNING MASTER: ' $MASTER_URI
 
 $SPARK_HOME/sbin/start-slave.sh $MASTER_URI
 
-# added sleep because the node's status is "ALIVE" initially
-# needs to be fixed
-while [[ $(tail -n 1 $mstr_log) != "SUCEEDED" ]]; do
+while [[ $(tail -n 1 $mstr_log) != "SUCCEEDED" ]]; do
 	sleep 5
 done
 $SPARK_HOME/sbin/stop-slave.sh
