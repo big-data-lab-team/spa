@@ -4,7 +4,7 @@ import argparse, time
 
 def sleep_task(x):
     time.sleep(0.5)
-    return (randint(0, 5), x)
+    return ( x % 5 , x)
 
 def main():
 
@@ -12,6 +12,7 @@ def main():
     sc = SparkContext.getOrCreate(conf=conf)
 
     parser = argparse.ArgumentParser(description='Dummy program to help test pilot scheduling')
+    parser.add_argument('output', type=str, help="output file name")
     parser.add_argument('-p', '--partitions', type=int, default=5, help="number of partitions")
     parser.add_argument('-c', '--checkpoint', type=str, help="checkpoint directory")
     args = parser.parse_args()
@@ -32,6 +33,9 @@ def main():
     waitRDD.checkpoint()
 
     result = waitRDD.collect()
+
+    with open(args.output, 'w') as f:
+        f.write(str(result[0]))
 
 if __name__ == '__main__':
     main()

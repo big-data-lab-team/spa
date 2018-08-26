@@ -1,5 +1,5 @@
 {
-
+    "name": "dummy program",
     "logdir": "/mnt/vhs/sparkpilot/logs",
     "num_nodes": 2,
     "SLURM_CONF_GLOBAL": {

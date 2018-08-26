@@ -1,5 +1,6 @@
 from os import path as op
 import argparse, time, json, os
+import hashlib
 from datetime import datetime
 from slurmpy import Slurm
 from subprocess import Popen, PIPE
@@ -17,33 +18,38 @@ def main():
     with args.params as f:
         conf = json.load(f)
 
-    if args.yarn and 'HADOOP_HOME' in os.environ:
+    if args.yarn and 'COMPUTE' in os.environ:
         open(op.join(os.environ['HADOOP_HOME'], 'etc/hadoop/slaves'), 'w').close()
     elif args.yarn:
         open(op.join(conf["COMPUTE"]["HADOOP_HOME"], 'etc/hadoop/slaves'), 'w').close()
 
     submit_func = "bash" if args.no_submit else "sbatch"
 
-    s = Slurm("pilotspark", conf["SLURM_CONF_GLOBAL"])
+    s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
 
-    program_start = datetime.now().strftime("%Y%m%d-%H%M%S%f")
+    program_start = datetime.now().strftime("%Y-%m-%d")
+
+    rand_hash = '{0}-{1}'.format(hashlib.sha1(args.template.encode("utf-8")).hexdigest(), hashlib.md5(os.urandom(16)).hexdigest())
+    job_id = rand_hash if args.no_submit else '${SLURM_JOB_ID}' 
+
+    if not "COMPUTE" in conf:
+        conf["COMPUTE"] = {}
 
     if not "mstr_bench" in conf["COMPUTE"]:
-        conf["COMPUTE"]["mstr_bench"] = op.join(conf["logdir"], "master-{}-benchmarks.$SLURM_JOB_ID.out".format(program_start))
+        conf["COMPUTE"]["mstr_bench"] = op.join(conf["logdir"], "master-{0}-benchmarks.{1}.out".format(program_start, job_id))
 
     if not "mstr_log" in conf["COMPUTE"]:
-        conf["COMPUTE"]["mstr_log"] = op.join(conf["logdir"], "master-{}.out".format(program_start))
+        conf["COMPUTE"]["mstr_log"] = op.join(conf["logdir"], "master-{0}-{1}.out".format(program_start, rand_hash))
 
-    conf["COMPUTE"]["mstr_lock"] = op.join(conf["logdir"], "master-{}.lock".format(program_start))
+    conf["COMPUTE"]["mstr_lock"] = op.join(conf["logdir"], "master-{0}-{1}.lock".format(program_start, rand_hash))
     
     conf["COMPUTE"]["logdir"] = conf["logdir"]   
 
     for i in range(conf["num_nodes"]):
             
         # SLURM batch submit workers
-        s.run(args.template, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
+        s.run(args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
         
-
     while not op.isfile(conf["COMPUTE"]["mstr_log"]):
         time.sleep(5)
 
@@ -52,10 +58,11 @@ def main():
     with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
         master_url = f.readline().strip('\n')
 
-    fw = open("tmpout", "wb")
-    fr = open("tmpout", "r")
-    p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
+    driver_out = op.join(conf["logdir"], "driver-{0}-{1}.out".format(program_start, rand_hash))
 
+    fw = open(driver_out, "wb")
+    fr = open(driver_out, "r")
+    p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
     for module in conf["DRIVER"]["modules"]:
         p.stdin.write("module load {}\n".format(module).encode('utf-8'))
 

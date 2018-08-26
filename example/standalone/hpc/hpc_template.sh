@@ -6,6 +6,7 @@ echo 'NODE: ' $(hostname)
 module load spark/2.3.0
 #module load python
 
+export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR
 
 $SPARK_HOME/sbin/start-master.sh

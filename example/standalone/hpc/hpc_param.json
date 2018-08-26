@@ -1,5 +1,5 @@
 {
-
+    "name": "dummy program",
     "logdir": "/scratch/vhayots/sparkpilot/logs",
     "num_nodes": 2,
     "SLURM_CONF_GLOBAL": {
@@ -13,12 +13,6 @@
     "DRIVER": {
 	"slurm_alloc": ["salloc", "--time=00:05:00", "--ntasks=1", "--nodes=1", "--account=def-glatard", "--mem=20G", "--cpus-per-task=1"],
 	"modules": ["spark/2.3.0"],
-	"program": "/scratch/vhayots/sparkpilot/example/dummyprogram.py -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
-    },
-    "COMPUTE": {
-	"head_ip": "cedar1.cedar.computecanada.ca",
-	"spscript": "'/scratch/vhayots/sparkpilot/example/dummyprogram.py -p 12 -c /scratch/vhayots/sparkpilot/checkpoints'",
-	"HADOOP_HOME": "/scratch/vhayots/sparkpilot/hadoop-2.7.7",
-	"datanode": "$SLURM_TMPDIR/hdfs/data/dataNode"
+	"program": "/scratch/vhayots/sparkpilot/example/dummyprogram.py /scratch/vhayots/sparkpilot/dummy.out -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
     }
 }
