@@ -11,8 +11,10 @@
     },
     "COMPUTE": {
         "node_spark": "/home/centos/spark-2.3.1-bin-hadoop2.7",
-        "node_java": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64/jre",
-        "spscript": "'/mnt/vhs/sparkpilot/example/dummyprogram.py -p 12 -c /mnt/vhs/sparkpilot/checkpoints'",
-        "head_ip": "192.168.224.4"
+        "node_java": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.181-3.b13.el7_5.x86_64/jre"
+    },
+    "DRIVER": {
+        "slurm_alloc": ["salloc", "--time=00:05:00", "--ntasks=1", "--nodes=1", "--mem=20G", "--cpus-per-task=1"],
+        "program": "/mnt/vhs/sparkpilot/sparkpilot/example/dummyprogram.py /mnt/vhs/sparkpilot/dummy.out -p 12 -c /mnt/vhs/sparkpilot/checkpoints"
     }
 }

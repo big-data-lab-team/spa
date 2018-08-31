@@ -1,6 +1,7 @@
 from os import path as op
 import argparse, time, json, os
 import hashlib
+import threading
 from datetime import datetime
 from slurmpy import Slurm
 from subprocess import Popen, PIPE
@@ -45,39 +46,59 @@ def main():
     
     conf["COMPUTE"]["logdir"] = conf["logdir"]   
 
-    for i in range(conf["num_nodes"]):
+    # if you want to run one master and worker locally, might as well submit to local
+    rm_nnodes = 1 if args.no_submit else 0
+
+    for i in range(conf["num_nodes"] - rm_nnodes):
             
         # SLURM batch submit workers
-        s.run(args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
+        thread = threading.Thread(target=s.run, kwargs=dict(command=args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func))
+        #s.run(args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
+        thread.daemon = True
+        thread.start()
         
-    while not op.isfile(conf["COMPUTE"]["mstr_log"]):
+    while conf["num_nodes"] - rm_nnodes > 0 and not op.isfile(conf["COMPUTE"]["mstr_log"]):
         time.sleep(5)
 
-    master_url = ""
+    if conf["num_nodes"] - rm_nnodes > 0:
+        master_url = ""
 
-    with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
-        master_url = f.readline().strip('\n')
+        with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
+            master_url = f.readline().strip('\n')
 
-    driver_out = op.join(conf["logdir"], "driver-{0}-{1}.out".format(program_start, rand_hash))
 
-    fw = open(driver_out, "wb")
-    fr = open(driver_out, "r")
-    p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
-    for module in conf["DRIVER"]["modules"]:
-        p.stdin.write("module load {}\n".format(module).encode('utf-8'))
-    
-    p.stdin.write("echo start $(date +%s.%N)\n".encode('utf-8'))
-    program = ("spark-submit --master {0} --executor-cores=${{SLURM_CPUS_PER_TASK}} "
-               "--executor-memory=${{SLURM_MEM_PER_NODE}}M {1}\n").format(master_url, conf["DRIVER"]["program"])
 
-    p.stdin.write(program.encode('utf-8'))
-    
-    out = fr.read()
+    program = None
+    if not args.no_submit:
+        driver_out = op.join(conf["logdir"], "driver-{0}-{1}.out".format(program_start, rand_hash))
+        fw = open(driver_out, "wb")
+        fr = open(driver_out, "r")
+        p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
+        for module in conf["DRIVER"]["modules"]:
+            p.stdin.write("module load {}\n".format(module).encode('utf-8'))
+        
+        p.stdin.write("echo start $(date +%s.%N)\n".encode('utf-8'))
+        program = ("spark-submit --master {0} --executor-cores=${{SLURM_CPUS_PER_TASK}} "
+                    "--executor-memory=${{SLURM_MEM_PER_NODE}}M {1}\n").format(master_url, conf["DRIVER"]["program"])
+        p.stdin.write(program.encode('utf-8'))
+        
+        out = fr.read()
 
-    p.stdin.write("echo end $(date +%s.%N)\n".encode('utf-8'))
-    p.stdin.write("echo 'SUCCEEDED' >> {}".format(conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
-    fw.close()
-    fr.close()
+        p.stdin.write("echo end $(date +%s.%N)\n".encode('utf-8'))
+        p.stdin.write("echo 'SUCCEEDED' >> {}".format(conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
+        fw.close()
+        fr.close()
+    elif conf["num_nodes"] == 1:
+        program = ("spark-submit --master local[*] {}\n").format(conf["DRIVER"]["program"])
+        p = Popen(program.split(), stdout = PIPE, stderr = PIPE)
+        stdin, stderr = p.communicate()
+        print(stdin, stderr)
+    else:
+        program = ("spark-submit --master {0} {1}\n").format(master_url, conf["DRIVER"]["program"])
+        p = Popen(program.split(), stdout = PIPE, stderr = PIPE)
+        stdin, stderr = p.communicate()
+        print(stdin, stderr)
+
 
 
 
