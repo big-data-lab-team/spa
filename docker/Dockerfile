@@ -30,7 +30,7 @@ RUN source $SPARK_HOME/conf/spark-env.sh
 
 EXPOSE 8080
 
-RUN pip3.6 install slurmpy pyspark
+RUN pip3.6 install slurmpy pyspark pytest pytest-cov
 # EXPOSE 22
 
 # RUN ["/usr/bin/ssh-keygen", "-A"]

@@ -71,8 +71,9 @@ def main():
 
 
     program = None
+    driver_out = op.join(conf["logdir"], "driver-{0}-{1}.out".format(program_start, rand_hash))
+
     if not args.no_submit:
-        driver_out = op.join(conf["logdir"], "driver-{0}-{1}.out".format(program_start, rand_hash))
         fw = open(driver_out, "wb")
         fr = open(driver_out, "r")
         p = Popen(conf["DRIVER"]["slurm_alloc"], stdin = PIPE, stdout = fw, stderr = fw, bufsize = 1)
@@ -101,6 +102,7 @@ def main():
         p = Popen(program.split(), stdout = PIPE, stderr = PIPE)
         stdin, stderr = p.communicate()
         print(stdin, stderr)
+
 
 
 
