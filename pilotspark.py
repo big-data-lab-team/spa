@@ -52,10 +52,12 @@ def main():
     for i in range(conf["num_nodes"] - rm_nnodes):
             
         # SLURM batch submit workers
-        thread = threading.Thread(target=s.run, kwargs=dict(command=args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func))
-        #s.run(args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
-        thread.daemon = True
-        thread.start()
+        if args.no_submit:
+            thread = threading.Thread(target=s.run, kwargs=dict(command=args.template, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func))
+            thread.daemon = True
+            thread.start()
+        else:
+            s.run(args.template, name_addition=rand_hash, cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
         
     while conf["num_nodes"] - rm_nnodes > 0 and not op.isfile(conf["COMPUTE"]["mstr_log"]):
         time.sleep(5)
@@ -79,7 +81,8 @@ def main():
         
         p.stdin.write("echo start $(date +%s.%N)\n".encode('utf-8'))
         program = ("spark-submit --master {0} --executor-cores=${{SLURM_CPUS_PER_TASK}} "
-                    "--executor-memory=${{SLURM_MEM_PER_NODE}}M {1}\n").format(master_url, conf["DRIVER"]["program"])
+                    "--executor-memory=${{SLURM_MEM_PER_NODE}}M  --driver-memory=${{SLURM_MEM_PER_NODE}}M {1}\n") \
+                            .format(master_url, conf["DRIVER"]["program"])
         p.stdin.write(program.encode('utf-8'))
         
         out = fr.read()

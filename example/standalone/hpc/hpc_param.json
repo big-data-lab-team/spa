@@ -1,7 +1,7 @@
 {
     "name": "dummy program",
     "logdir": "/scratch/vhayots/sparkpilot/logs",
-    "num_nodes": 4,
+    "num_nodes": 5,
     "SLURM_CONF_GLOBAL": {
 	"account": "def-glatard",
         "time": "00:05:00",

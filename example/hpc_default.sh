@@ -9,12 +9,12 @@
 
 logdir=/scratch/vhayots/sparkpilot/logs
 mstr_bench=$logdir/hpc_def_${SLURM_JOB_ID}_benchmarks.out
-spscript="/scratch/vhayots/sparkpilot/example/dummyprogram.py /scratch/vhayots/sparkpilot/dummy.out -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
+spscript="/scratch/vhayots/sparkpilot/example/dummyprogram.py /scratch/vhayots/sparkpilot/dummy-1.out -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
 
 echo start $(date +%s.%N) > $mstr_bench
 
 module load spark/2.3.0
-module load python
+#module load python
 
 export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR

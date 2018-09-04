@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo start $(date +%s.%N) > $mstr_bench
-echo 'NODE: ' $(hostname)
+echo 'NODE: ' $(hostname) $(hostname -i)
 
 module load spark/2.3.0
 #module load python
@@ -29,7 +29,7 @@ fi
 
 echo 'RUNNING MASTER: ' $MASTER_URI
 
-$SPARK_HOME/sbin/start-slave.sh $MASTER_URI
+$SPARK_HOME/sbin/start-slave.sh -m ${SLURM_MEM_PER_NODE}M -c ${SLURM_CPUS_PER_TASK} $MASTER_URI 
 
 while [[ $(tail -n 1 $mstr_log) != "SUCCEEDED" ]]; do
 	sleep 5
