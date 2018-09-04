@@ -9,7 +9,7 @@ services:
 install: true
 
 before_script:
-- docker build -t sparkdoc .
+- docker build -t sparkdoc ./docker
 
 script: 
 - docker run --privileged --rm=false -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/mnt/vhs/sparkpilot -w /mnt/vhs/sparkpilot sparkdoc ./tests/execute_tests.sh
