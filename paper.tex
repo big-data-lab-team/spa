@@ -1,0 +1,47 @@
+\documentclass{IEEEtran}
+\usepackage[hyphens]{url}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{colortbl} % for \rowcolor
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[bookmarks=false]{hyperref}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=blue,filecolor=black,urlcolor=blue}
+
+
+\newcommand{\todo}[1]{\marginpar{\parbox{18mm}{\flushleft\tiny\color{red}\textbf{TODO}:
+      #1}}}
+\definecolor{headcolor}{gray}{0.9}
+
+\begin{document}
+\title{SPA: An Apache Spark Pilot scheduler for HPC applications}
+\author{
+    \IEEEauthorblockN{
+        Val\'erie Hayot-Sasson and Tristan Glatard
+    }
+    \IEEEauthorblockA{}
+}
+\maketitle
+
+\begin{abstract}
+    \todo{complete}
+\end{abstract}
+
+\section{Introduction}
+\section{Materials and Methods}\label{sec:methods}
+    \todo{walltime parameter of workflow}
+    \subsection{Added value of pilot scheduling}
+        \todo{execution of a batch cluster vs dynamic (pilot) cluster}
+    \subsection{Robust masters}
+        \todo{scala standalone vs our pyspark workaround. kill masters in experiments}
+    \subsection{Checkpointing}
+        \todo{metric for determining how often to checkpoint based on cluster size}
+    \subsection{Job arrays}
+        \todo{need to kill idle workers. may not want all workers to be running at once.}
+    \subsection{Example application}
+        \todo{incrementation with varying task durations}
+\section{Discussion}\label{sec:discussion}
+\section{Conclusion}\label{sec:conclusion}
+
+\end{document}
