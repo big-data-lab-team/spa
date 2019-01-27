@@ -18,6 +18,7 @@ module load spark/2.3.0
 
 export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR
+export SLURM_SPARK_MEM=$(printf "%.0f" $((${SLURM_MEM_PER_NODE} *0.95)))
 
 start-master.sh
 while [ -z "$MASTER_URL" ]
@@ -29,10 +30,10 @@ done
 
 NWORKERS=$((SLURM_NTASKS - 1))
 
-SPARK_NO_DAEMONIZE=1 srun -n ${NWORKERS} -N ${NWORKERS} --label --output=$SPARK_LOG_DIR/spark-%j-workers.out start-slave.sh -m ${SLURM_MEM_PER_NODE}M -c ${SLURM_CPUS_PER_TASK} ${MASTER_URL} &
+SPARK_NO_DAEMONIZE=1 srun -n ${NWORKERS} -N ${NWORKERS} --label --output=$SPARK_LOG_DIR/spark-%j-workers.out start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} ${MASTER_URL} &
 slaves_pid=$!
 
-srun -n 1 -N 1 spark-submit --master=${MASTER_URL} --executor-memory=${SLURM_MEM_PER_NODE}M $spscript
+srun -n 1 -N 1 spark-submit --master=${MASTER_URL} --executor-memory=${SLURM_SPARK_MEM}M $spscript
 
 kill $slaves_pid
 stop-master.sh
