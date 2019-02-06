@@ -23,7 +23,7 @@ object IncrementApp {
 
   def incrementData( filename:String, data: Array[Array[Array[Array[Double]]]], sleep: Int )
     : Tuple2[String, Array[Array[Array[Array[Double]]]]] = {
-    for( i <- 0 to data.length - 1) {
+    /*for( i <- 0 to data.length - 1) {
       for( j <- 0 to data(0).length - 1) {
         for( k <- 0 to data(0)(0).length - 1) {
           for( l <- 0 to data(0)(0)(0).length - 1 ) {
@@ -31,7 +31,7 @@ object IncrementApp {
           }
         }
       }
-    }
+    }*/
     Thread.sleep(sleep * 1000)
     return (filename, data)
   }
