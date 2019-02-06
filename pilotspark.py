@@ -14,12 +14,11 @@ def main():
 
     parser = argparse.ArgumentParser(
             description='Pilot-Agent scheduling for SLURM')
+
     parser.add_argument('template', type=str,
                         help="SLURM batch script template")
     parser.add_argument('params', type=argparse.FileType('r'),
                         help="SLURM batch script params (JSON)")
-    parser.add_argument('-y', '--yarn', action='store_true',
-                        help="Yarn scheduler will be used")
     parser.add_argument('-D', '--no_submit', action='store_true',
                         help="Create but do not submit sbatch scripts")
     args = parser.parse_args()
@@ -27,13 +26,6 @@ def main():
     conf = None
     with args.params as f:
         conf = json.load(f)
-
-    if args.yarn and 'COMPUTE' in os.environ:
-        open(op.join(os.environ['HADOOP_HOME'], 'etc/hadoop/slaves'), 'w') \
-            .close()
-    elif args.yarn:
-        open(op.join(conf["COMPUTE"]["HADOOP_HOME"], 'etc/hadoop/slaves'),
-             'w').close()
 
     submit_func = "bash" if args.no_submit else "sbatch"
 
@@ -71,8 +63,8 @@ def main():
     rm_nnodes = 1 if args.no_submit else 0
 
     for i in range(conf["num_nodes"] - rm_nnodes):
-
-        # SLURM batch submit workers
+    
+        # Create masters/workers in the node
         if args.no_submit:
             thread = threading.Thread(target=s.run,
                                       kwargs=dict(command=args.template,
@@ -80,6 +72,8 @@ def main():
                                                   _cmd=submit_func))
             thread.daemon = True
             thread.start()
+
+        # SLURM batch submit masters/workers
         else:
             s.run(args.template, name_addition=rand_hash,
                   cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
@@ -98,6 +92,8 @@ def main():
     driver_out = op.join(conf["logdir"],
                          "driver-{0}-{1}.out".format(program_start, rand_hash))
 
+    # PySpark is only possible in client mode, therefore deploying driver
+    # in a slurm interactive node as a temporary solution
     if not args.no_submit:
         fw = open(driver_out, "wb")
         fr = open(driver_out, "r")
@@ -121,12 +117,16 @@ def main():
                      conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
         fw.close()
         fr.close()
+
+    # If only one node is required, run Spark in local mode
     elif conf["num_nodes"] == 1:
         program = ("spark-submit --master local[*] {}\n") \
                 .format(conf["DRIVER"]["program"])
         p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
         stdin, stderr = p.communicate()
         print(stdin, stderr)
+
+    # Not submitting to Slurm, therefore execute driver in node
     else:
         program = ("spark-submit --master {0} {1}\n") \
                 .format(master_url, conf["DRIVER"]["program"])
