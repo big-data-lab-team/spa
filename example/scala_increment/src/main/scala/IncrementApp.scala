@@ -14,34 +14,32 @@ object IncrementApp {
   """
 
   def readImg( filename:String, data:PortableDataStream )
-    : Tuple2[String, Array[Array[Array[Array[Double]]]]] = {
+    : Tuple2[String, NiftiVolume] = {
     val niftibytes = data.open()
     val volume = NiftiVolume.read(niftibytes, filename)
     niftibytes.close()
-    return (new File(filename).getName(), volume.data.toArray())
+    return (new File(filename).getName(), volume)
   }
 
-  def incrementData( filename:String, data: Array[Array[Array[Array[Double]]]], sleep: Int )
-    : Tuple2[String, Array[Array[Array[Array[Double]]]]] = {
-    for( i <- 0 to data.length - 1) {
-      for( j <- 0 to data(0).length - 1) {
-        for( k <- 0 to data(0)(0).length - 1) {
-          for( l <- 0 to data(0)(0)(0).length - 1 ) {
-            data(i)(j)(k)(l) = data(i)(j)(k)(l) + 1.0
+  def incrementData( filename:String, volume: NiftiVolume, sleep: Int )
+    : Tuple2[String, NiftiVolume] = {
+
+
+    for( i <- 0 to volume.data.sizeX - 1) {
+      for( j <- 0 to volume.data.sizeY - 1) {
+        for( k <- 0 to volume.data.sizeZ - 1) {
+          for( l <- 0 to volume.data.dimension - 1 ) {
+            volume.data.set(i, j, k, l, volume.data.get(i, j, k, l) + 1.0)
           }
         }
       }
     }
     Thread.sleep(sleep * 1000)
-    return (filename, data)
+    return (filename, volume )
   }
 
-  def saveData( fn: String, data: Array[Array[Array[Array[Double]]]] )
+  def saveData( fn: String, volume: NiftiVolume )
     : Tuple2[String, String] = {
-    val volume = new NiftiVolume(data)
-
-    // hardcoded for now
-    volume.header.setDatatype(NiftiHeader.NIFTI_TYPE_UINT16)
 
     volume.write(fn)
 
