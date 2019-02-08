@@ -1,15 +1,15 @@
 #!/bin/bash
 
 #SBATCH --account=def-glatard
-#SBATCH --time=00:05:00
-#SBATCH --nodes=5
-#SBATCH --mem=20G
-#SBATCH --cpus-per-task=1
+#SBATCH --time=01:00:00
+#SBATCH --nodes=6
+#SBATCH --mem=50G
+#SBATCH --cpus-per-task=5
 #SBATCH --ntasks-per-node=1
 
-logdir=/scratch/vhayots/sparkpilot/logs
+logdir=/scratch/vhayots/spa/logs
 mstr_bench=$logdir/hpc_def_${SLURM_JOB_ID}_benchmarks.out
-spscript="/scratch/vhayots/sparkpilot/example/dummyprogram.py /scratch/vhayots/sparkpilot/dummy-1.out -p 12 -c /scratch/vhayots/sparkpilot/checkpoints"
+spscript="--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/scalaout 1"
 
 echo start $(date +%s.%N) > $mstr_bench
 
@@ -18,7 +18,8 @@ module load spark/2.3.0
 
 export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR
-export SLURM_SPARK_MEM=$(printf "%.0f" $((${SLURM_MEM_PER_NODE} *0.95)))
+export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_NODE} * 0.95" | bc)
+export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
 
 start-master.sh
 while [ -z "$MASTER_URL" ]
