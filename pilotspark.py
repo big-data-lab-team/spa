@@ -2,6 +2,7 @@ from os import path as op
 from datetime import datetime
 from slurmpy import Slurm
 from subprocess import Popen, PIPE
+from multiprocessing import cpu_count
 import argparse
 import time
 import json
@@ -10,24 +11,30 @@ import hashlib
 import threading
 
 
-def main():
+#conf["num_nodes"]
+#conf["COMPUTE"]
+def start_workers(s, num_nodes, compute_conf, template, rand_hash, submit_func):
 
-    parser = argparse.ArgumentParser(
-            description='Pilot-Agent scheduling for SLURM')
+    for i in range():
+        # Create masters/workers in the node
+        if args.no_submit:
+            thread = threading.Thread(target=s.run,
+                                      kwargs=dict(command=template,
+                                                  cmd_kwargs=compute_conf,
+                                                  _cmd=submit_func))
+            thread.daemon = True
+            thread.start()
 
-    parser.add_argument('template', type=str,
-                        help="SLURM batch script template")
-    parser.add_argument('params', type=argparse.FileType('r'),
-                        help="SLURM batch script params (JSON)")
-    parser.add_argument('-D', '--no_submit', action='store_true',
-                        help="Create but do not submit sbatch scripts")
-    args = parser.parse_args()
+        # SLURM batch submit masters/workers
+        else:
+            s.run(template, name_addition=rand_hash,
+                  cmd_kwargs=compute_conf, _cmd=submit_func)
 
-    conf = None
-    with args.params as f:
-        conf = json.load(f)
+
+def submit_pilots(template, conf):
 
     submit_func = "bash" if args.no_submit else "sbatch"
+    job_id = rand_hash if args.no_submit else '${SLURM_JOB_ID}'
 
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
 
@@ -36,8 +43,6 @@ def main():
     rand_hash = '{0}-{1}'.format(
             hashlib.sha1(args.template.encode("utf-8")).hexdigest(),
             hashlib.md5(os.urandom(16)).hexdigest())
-
-    job_id = rand_hash if args.no_submit else '${SLURM_JOB_ID}'
 
     if "COMPUTE" not in conf:
         conf["COMPUTE"] = {}
@@ -58,35 +63,17 @@ def main():
 
     conf["COMPUTE"]["logdir"] = conf["logdir"]
 
-    # if you want to run one master and worker locally,
-    # might as well submit to local
-    rm_nnodes = 1 if args.no_submit else 0
+    return master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
+                                      template, rand_hash, "sbatch")
 
-    for i in range(conf["num_nodes"] - rm_nnodes):
-    
-        # Create masters/workers in the node
-        if args.no_submit:
-            thread = threading.Thread(target=s.run,
-                                      kwargs=dict(command=args.template,
-                                                  cmd_kwargs=conf["COMPUTE"],
-                                                  _cmd=submit_func))
-            thread.daemon = True
-            thread.start()
-
-        # SLURM batch submit masters/workers
-        else:
-            s.run(args.template, name_addition=rand_hash,
-                  cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
-
-    while(conf["num_nodes"] - rm_nnodes > 0
+    while(conf["num_nodes"] > 0
           and not op.isfile(conf["COMPUTE"]["mstr_log"])):
         time.sleep(5)
 
-    if conf["num_nodes"] - rm_nnodes > 0:
-        master_url = ""
+    master_url = ""
 
-        with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
-            master_url = f.readline().strip('\n')
+    with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
+        master_url = f.readline().strip('\n')
 
     program = None
     driver_out = op.join(conf["logdir"],
@@ -133,6 +120,34 @@ def main():
         p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
         stdin, stderr = p.communicate()
         print(stdin, stderr)
+
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+            description='Pilot-Agent scheduling for SLURM')
+
+    parser.add_argument('template', type=str,
+                        help="SLURM batch script template")
+    parser.add_argument('params', type=argparse.FileType('r'),
+                        help="SLURM batch script params (JSON)")
+    parser.add_argument('-B', '--batch_submit', action='store_true',
+                        help="Batch submit request for resources (no pilots)")
+    parser.add_argument('-D', '--no_submit', action='store_true',
+                        help="Create but do not submit sbatch scripts")
+    args = parser.parse_args()
+
+    conf = None
+    with args.params as f:
+        conf = json.load(f)
+
+    if args.no_submit:
+        submit_locally(template, conf)
+    elif args.batch_submit:
+        submit_sbatch(template, conf)
+    else:
+        submit_pilots(template, conf)
 
 
 if __name__ == '__main__':
