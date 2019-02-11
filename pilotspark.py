@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from os import path as op
 from datetime import datetime
 from slurmpy import Slurm
@@ -32,7 +33,7 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
 
         # SLURM batch submit masters/workers
         else:
-            if i == 0 and driver_conf["cluster"]:
+            if i == 0 and driver_conf["deploy"] == "cluster":
                 program = ("spark-submit --master ${{MASTER_URL}} "
                            "--executor-cores=${{SLURM_CPUS_PER_TASK}} "
                            "--executor-memory=${{SLURM_SPARK_MEM}}M  "
@@ -51,7 +52,7 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
         return f.readline().strip(os.linesep)
 
 
-def configure(conf, job_id, rand_hash)
+def configure(conf, job_id, rand_hash):
 
     program_start = datetime.now().strftime("%Y-%m-%d")
 
@@ -77,21 +78,22 @@ def configure(conf, job_id, rand_hash)
 
 def submit_sbatch(template, conf):
     submit_func = "sbatch"
-    rand_hash = gen_hash(template)
+    rand_hash = "" #gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
     configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     s.run(template, name_addition=rand_hash,
-          cmd_kwargs=compute_conf, _cmd=submit_func)
+          cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
 
 
 def submit_locally(template, conf):
 
     submit_func = "bash"
     rand_hash = gen_hash(template) 
-    job_id = rand_hash
+    job_id = ""
 
-    configure(conf, job_id)
+    configure(conf, job_id, rand_hash)
+    s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
                                template, rand_hash, submit_func)
 
@@ -108,7 +110,7 @@ def submit_pilots(template, conf):
     rand_hash = gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
-    configure(conf, job_id)
+    configure(conf, job_id, rand_hash)
 
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
                                template, rand_hash, "sbatch")
@@ -164,11 +166,11 @@ def main():
         conf = json.load(f)
 
     if args.no_submit:
-        submit_locally(template, conf)
+        submit_locally(args.template, conf)
     elif args.batch_submit:
-        submit_sbatch(template, conf)
+        submit_sbatch(args.template, conf)
     else:
-        submit_pilots(template, conf)
+        submit_pilots(args.template, conf)
 
 
 if __name__ == '__main__':
