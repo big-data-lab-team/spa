@@ -11,13 +11,18 @@ import hashlib
 import threading
 
 
-#conf["num_nodes"]
-#conf["COMPUTE"]
-def start_workers(s, num_nodes, compute_conf, template, rand_hash, submit_func):
+def gen_hash(template):
+    return '{0}-{1}'.format(
+            hashlib.sha1(template.encode("utf-8")).hexdigest(),
+            hashlib.md5(os.urandom(16)).hexdigest())
 
-    for i in range():
+
+def start_workers(s, num_nodes, compute_conf, template, rand_hash,
+                  submit_func, driver_conf=None):
+
+    for i in range(num_nodes):
         # Create masters/workers in the node
-        if args.no_submit:
+        if submit_func == "bash":
             thread = threading.Thread(target=s.run,
                                       kwargs=dict(command=template,
                                                   cmd_kwargs=compute_conf,
@@ -27,22 +32,28 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash, submit_func):
 
         # SLURM batch submit masters/workers
         else:
+            if i == 0 and driver_conf["cluster"]:
+                program = ("spark-submit --master ${{MASTER_URL}} "
+                           "--executor-cores=${{SLURM_CPUS_PER_TASK}} "
+                           "--executor-memory=${{SLURM_SPARK_MEM}}M  "
+                           "{1}\n") \
+                    .format(conf["DRIVER"]["program"])
+                compute_conf["driver_prog"] = program
+
             s.run(template, name_addition=rand_hash,
                   cmd_kwargs=compute_conf, _cmd=submit_func)
 
+    while(num_nodes > 0
+          and not op.isfile(compute_conf["mstr_log"])):
+        time.sleep(5)
 
-def submit_pilots(template, conf):
+    with open(compute_conf["mstr_log"], 'r') as f:
+        return f.readline().strip(os.linesep)
 
-    submit_func = "bash" if args.no_submit else "sbatch"
-    job_id = rand_hash if args.no_submit else '${SLURM_JOB_ID}'
 
-    s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
+def configure(conf, job_id, rand_hash)
 
     program_start = datetime.now().strftime("%Y-%m-%d")
-
-    rand_hash = '{0}-{1}'.format(
-            hashlib.sha1(args.template.encode("utf-8")).hexdigest(),
-            hashlib.md5(os.urandom(16)).hexdigest())
 
     if "COMPUTE" not in conf:
         conf["COMPUTE"] = {}
@@ -63,17 +74,42 @@ def submit_pilots(template, conf):
 
     conf["COMPUTE"]["logdir"] = conf["logdir"]
 
-    return master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
-                                      template, rand_hash, "sbatch")
 
-    while(conf["num_nodes"] > 0
-          and not op.isfile(conf["COMPUTE"]["mstr_log"])):
-        time.sleep(5)
+def submit_sbatch(template, conf):
+    submit_func = "sbatch"
+    rand_hash = gen_hash(template)
+    s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
+    s.run(template, name_addition=rand_hash,
+          cmd_kwargs=compute_conf, _cmd=submit_func)
 
-    master_url = ""
 
-    with open(conf["COMPUTE"]["mstr_log"], 'r') as f:
-        master_url = f.readline().strip('\n')
+def submit_locally(template, conf):
+
+    submit_func = "bash"
+    rand_hash = gen_hash(template) 
+    job_id = rand_hash
+
+    configure(conf, job_id)
+    master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
+                               template, rand_hash, submit_func)
+
+    program = ("spark-submit --master {0} {1}\n") \
+            .format(master_url, conf["DRIVER"]["program"])
+    p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
+    stdin, stderr = p.communicate()
+    print(stdin, stderr)
+
+
+def submit_pilots(template, conf):
+
+    submit_func = "sbatch"
+    rand_hash = gen_hash(template)
+    job_id = '${SLURM_JOB_ID}'
+    s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
+    configure(conf, job_id)
+
+    master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
+                               template, rand_hash, "sbatch")
 
     program = None
     driver_out = op.join(conf["logdir"],
@@ -81,7 +117,7 @@ def submit_pilots(template, conf):
 
     # PySpark is only possible in client mode, therefore deploying driver
     # in a slurm interactive node as a temporary solution
-    if not args.no_submit:
+    if conf["DRIVER"]["deploy"] == "client":
         fw = open(driver_out, "wb")
         fr = open(driver_out, "r")
         p = Popen(conf["DRIVER"]["slurm_alloc"], stdin=PIPE, stdout=fw,
@@ -104,23 +140,6 @@ def submit_pilots(template, conf):
                      conf["COMPUTE"]["mstr_log"]).encode('utf-8'))
         fw.close()
         fr.close()
-
-    # If only one node is required, run Spark in local mode
-    elif conf["num_nodes"] == 1:
-        program = ("spark-submit --master local[*] {}\n") \
-                .format(conf["DRIVER"]["program"])
-        p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
-        stdin, stderr = p.communicate()
-        print(stdin, stderr)
-
-    # Not submitting to Slurm, therefore execute driver in node
-    else:
-        program = ("spark-submit --master {0} {1}\n") \
-                .format(master_url, conf["DRIVER"]["program"])
-        p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
-        stdin, stderr = p.communicate()
-        print(stdin, stderr)
-
 
 
 def main():
