@@ -4,11 +4,11 @@ echo start $(date +%s.%N) > $mstr_bench
 echo 'NODE: ' $(hostname) $(hostname -i)
 
 module load spark/2.3.0
-#module load python
 
 export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR
-export SLURM_SPARK_MEM=$(printf "%.0f" $((${SLURM_MEM_PER_NODE} *0.95)))
+export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_NODE} * 0.95" | bc)
+export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
 
 $SPARK_HOME/sbin/start-master.sh
 if [ ! -f $mstr_log ]; then

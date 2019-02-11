@@ -78,6 +78,8 @@ def configure(conf, job_id, rand_hash)
 def submit_sbatch(template, conf):
     submit_func = "sbatch"
     rand_hash = gen_hash(template)
+    job_id = '${SLURM_JOB_ID}'
+    configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     s.run(template, name_addition=rand_hash,
           cmd_kwargs=compute_conf, _cmd=submit_func)
