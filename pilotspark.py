@@ -33,16 +33,19 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
 
         # SLURM batch submit masters/workers
         else:
-            if i == 0 and driver_conf["deploy"] == "cluster":
-                program = ("spark-submit --master ${{MASTER_URL}} "
+            if i == 0 and driver_conf is not None and driver_conf["deploy"] == "cluster":
+                print("driver node")
+                program = ("\'spark-submit --master $MASTER_URI "
                            "--executor-cores=${{SLURM_CPUS_PER_TASK}} "
                            "--executor-memory=${{SLURM_SPARK_MEM}}M  "
-                           "{1}\n") \
-                    .format(conf["DRIVER"]["program"])
+                           "{0}\'") \
+                    .format(driver_conf["program"])
                 compute_conf["driver_prog"] = program
 
+            rand_hash = "{0}-{1}".format(rand_hash, i)
             s.run(template, name_addition=rand_hash,
                   cmd_kwargs=compute_conf, _cmd=submit_func)
+            compute_conf["driver_prog"] = ""
 
     while(num_nodes > 0
           and not op.isfile(compute_conf["mstr_log"])):
@@ -74,6 +77,8 @@ def configure(conf, job_id, rand_hash):
             "master-{0}-{1}.lock".format(program_start, rand_hash))
 
     conf["COMPUTE"]["logdir"] = conf["logdir"]
+
+    return program_start
 
 
 def submit_sbatch(template, conf):
@@ -110,18 +115,17 @@ def submit_pilots(template, conf):
     rand_hash = gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
-    configure(conf, job_id, rand_hash)
+    program_start = configure(conf, job_id, rand_hash)
 
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
-                               template, rand_hash, "sbatch")
-
-    program = None
-    driver_out = op.join(conf["logdir"],
-                         "driver-{0}-{1}.out".format(program_start, rand_hash))
+                               template, rand_hash, "sbatch", conf["DRIVER"])
 
     # PySpark is only possible in client mode, therefore deploying driver
     # in a slurm interactive node as a temporary solution
     if conf["DRIVER"]["deploy"] == "client":
+        program = None
+        driver_out = op.join(conf["logdir"],
+                             "driver-{0}-{1}.out".format(program_start, rand_hash))
         fw = open(driver_out, "wb")
         fr = open(driver_out, "r")
         p = Popen(conf["DRIVER"]["slurm_alloc"], stdin=PIPE, stdout=fw,

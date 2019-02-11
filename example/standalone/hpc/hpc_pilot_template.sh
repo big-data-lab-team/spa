@@ -10,6 +10,13 @@ export SPARK_WORKER_DIR=$SLURM_TMPDIR
 export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_NODE} * 0.95" | bc)
 export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
 
+echo $SLURM_SPARK_MEM
+
+#if [ ! -z "$MASTER_URI" ]
+#then
+#    unset MASTER_URI
+#fi
+
 $SPARK_HOME/sbin/start-master.sh
 if [ ! -f $mstr_log ]; then
     lockfile -r 0 $mstr_lock
@@ -32,8 +39,14 @@ echo 'RUNNING MASTER: ' $MASTER_URI
 
 $SPARK_HOME/sbin/start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} $MASTER_URI 
 
+if [ ! -z "$driver_prog" ]; then
+    MASTER_URI=${MASTER_URI/7077/6066} # cluster mode requires REST port
+    echo $MASTER_URI 
+    eval $driver_prog
+fi
+
 while [[ $(tail -n 1 $mstr_log) != "SUCCEEDED" ]]; do
-	sleep 5
+    sleep 5
 done
 $SPARK_HOME/sbin/stop-slave.sh
 $SPARK_HOME/sbin/stop-master.sh
