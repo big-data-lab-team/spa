@@ -42,8 +42,8 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
                     .format(driver_conf["program"])
                 compute_conf["driver_prog"] = program
 
-            rand_hash = "{0}-{1}".format(rand_hash, i)
-            s.run(template, name_addition=rand_hash,
+            worker_hash = "{0}-{1}".format(rand_hash, i)
+            s.run(template, name_addition=worker_hash,
                   cmd_kwargs=compute_conf, _cmd=submit_func)
             compute_conf["driver_prog"] = ""
 

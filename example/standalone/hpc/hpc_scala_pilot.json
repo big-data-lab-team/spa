@@ -6,7 +6,7 @@
 	"account": "def-glatard",
         "time": "00:15:00",
         "nodes": 1,
-        "mem": "20G",
+        "mem": "30G",
         "cpus-per-task": 3,
         "ntasks-per-node": 1
     },
