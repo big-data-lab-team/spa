@@ -19,7 +19,6 @@ if [ ! -f $mstr_log ]; then
 	while [ -z "$MASTER_URI" ]
 	do
 		MASTER_URI=$(grep -Po '(?=spark://).*' $SPARK_LOG_DIR/spark-${SPARK_IDENT_STRING}-org.apache.spark.deploy.master*.out)
-		#MASTER_URI=$(curl -s http://localhost:8080/json/ | jq -r ".url")
 		sleep 5
 	done
         echo $MASTER_URI > $mstr_log
@@ -31,14 +30,16 @@ else
     MASTER_URI=$(head -n 1 $mstr_log)
 fi
 
-while [[ -z "$MASTER_UI_PORT" && -z "$REST_SERVER_PORT" ]]
+while [[ -z "$MASTER_UI_PORT" ]]
 do
     echo "loading logfile data"
     MASTER_UI_PORT=$(grep -Po "'MasterUI' on port.*" $SPARK_LOG_DIR/spark-${SPARK_IDENT_STRING}-org.apache.spark.deploy.master*.out | awk '{print $NF}')
     MASTER_UI_PORT=${MASTER_UI_PORT/./}
-
     REST_SERVER_PORT=$(grep -Po "Started REST server.*" $SPARK_LOG_DIR/spark-${SPARK_IDENT_STRING}-org.apache.spark.deploy.master*.out | awk '{print $NF}')
+    MASTER_ALIVE=$(grep 'ALIVE' $SPARK_LOG_DIR/spark-${SPARK_IDENT_STRING}-org.apache.spark.deploy.master*.out)
 done
+echo $MASTER_ALIVE
+sleep 60
 
 echo 'RUNNING MASTER: ' $MASTER_URI
 echo 'Master UI port: ' $MASTER_UI_PORT
@@ -69,16 +70,28 @@ fi
 cores_in_use='$([[ $(curl -s $WORKER_UI | jq -r ".coresused") == "0" ]] && { echo false; } || { echo true; })'
 executors_complete='$([[ $(curl -s $WORKER_UI | jq -r ".finishedexecutor" | jq 'if length = 0 then "true" else "false" end') == "true" ]] && { echo false; } || { echo true; })'
 
-idle_count = 0
+idle_count=0
+elapsed_time=0
+start_time="$(date -u +%s)"
+
 while true; do
     echo 'executor running'
     MASTER_UI=${MASTER_URI/spark/http}
     MASTER_UI=${MASTER_UI/%????/$MASTER_UI_PORT}
     curl -s $WORKER_UI
     echo $idle_count
-    [[ $cores_in_use == "false" ]] && idle_count=$((idle_count + 1)) || idle_count=0
-    [ $idle_count -ge 0 ] && sleep 1 || sleep 5
-    [ $idle_count -ge 5 ] && break
+    [[ $(eval $cores_in_use) == "false" ]] && idle_count=$((idle_count + 1)) || idle_count=0
+
+    if [ $idle_count -ge 0 ]; then
+        end_time="$(date -u +%s)"
+	elapsed_time="$(($end_time-$start_time))"
+	sleep 1
+    else
+	sleep 5
+    fi
+
+    [ $elapsed_time -ge 120 ] && break
+
 done
 $SPARK_HOME/sbin/stop-slave.sh
 $SPARK_HOME/sbin/stop-master.sh
