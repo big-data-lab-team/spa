@@ -4,7 +4,7 @@
     "num_nodes": 5,
     "SLURM_CONF_GLOBAL": {
 	"account": "def-glatard",
-        "time": "00:15:00",
+        "time": "00:20:00",
         "nodes": 1,
         "mem": "30G",
         "cpus-per-task": 3,
@@ -13,6 +13,7 @@
     "DRIVER": {
         "modules": ["spark/2.3.0"],
 	"deploy": "cluster",
-        "program": "--deploy-mode cluster --jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/scalaout 1"
+	"jars": "/home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar", 
+        "program": "/home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/scalaout 1"
     }
 }

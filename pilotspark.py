@@ -10,6 +10,7 @@ import json
 import os
 import hashlib
 import threading
+import requests
 
 
 def gen_hash(template):
@@ -19,7 +20,7 @@ def gen_hash(template):
 
 
 def start_workers(s, num_nodes, compute_conf, template, rand_hash,
-                  submit_func, driver_conf=None):
+                  submit_func, jobs):
 
     for i in range(num_nodes):
         # Create masters/workers in the node
@@ -33,26 +34,21 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
 
         # SLURM batch submit masters/workers
         else:
-            if i == 0 and driver_conf is not None and driver_conf["deploy"] == "cluster":
-                print("driver node")
-                program = ("\'spark-submit --master $MASTER_URI "
-                           "--executor-cores=${{SLURM_CPUS_PER_TASK}} "
-                           "--executor-memory=${{SLURM_SPARK_MEM}}M  "
-                           "{0}\'") \
-                    .format(driver_conf["program"])
-                compute_conf["driver_prog"] = program
-
             worker_hash = "{0}-{1}".format(rand_hash, i)
-            s.run(template, name_addition=worker_hash,
-                  cmd_kwargs=compute_conf, _cmd=submit_func)
-            compute_conf["driver_prog"] = ""
+            job_id = s.run(template, name_addition=worker_hash,
+                           cmd_kwargs=compute_conf, _cmd=submit_func)
+            jobs.append(str(job_id))
 
     while(num_nodes > 0
           and not op.isfile(compute_conf["mstr_log"])):
         time.sleep(5)
 
+    master_id = ""
     with open(compute_conf["mstr_log"], 'r') as f:
-        return f.readline().strip(os.linesep)
+        master_id = f.readline().strip(os.linesep)
+
+    print(jobs)
+    return master_id
 
 
 def configure(conf, job_id, rand_hash):
@@ -72,9 +68,20 @@ def configure(conf, job_id, rand_hash):
                 conf["logdir"],
                 "master-{0}-{1}.out".format(program_start, rand_hash))
 
+    if ("deploy" in conf["DRIVER"] and conf["DRIVER"]["deploy"] == "cluster"
+        and "drvr_log" not in conf["COMPUTE"]):
+        conf["COMPUTE"]["drvr_log"] = op.join(
+                conf["logdir"],
+                "driver-{0}-{1}.out".format(program_start, rand_hash))
+
     conf["COMPUTE"]["mstr_lock"] = op.join(
             conf["logdir"],
             "master-{0}-{1}.lock".format(program_start, rand_hash))
+
+
+    conf["COMPUTE"]["drvr_lock"] = op.join(
+            conf["logdir"],
+            "driver-{0}-{1}.lock".format(program_start, rand_hash))
 
     conf["COMPUTE"]["logdir"] = conf["logdir"]
 
@@ -82,13 +89,29 @@ def configure(conf, job_id, rand_hash):
 
 
 def submit_sbatch(template, conf):
+    print(time.time())
     submit_func = "sbatch"
     rand_hash = "" #gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
     configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
-    s.run(template, name_addition=rand_hash,
-          cmd_kwargs=conf["COMPUTE"], _cmd=submit_func)
+    job_id = s.run(template, cmd_kwargs=conf["DRIVER"], _cmd=submit_func)
+
+    job_id = str(job_id)
+    condition = True
+
+    while condition:
+        p = Popen(["squeue", "-j", job_id], stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+
+        out = str(out, 'utf-8')
+        out = out.split(os.linesep)
+        out.pop(0)
+        queue = [l.split(' ')[0] for l in out if l.split(' ') != '']
+
+        condition = job_id in queue
+
+    print(time.time())
 
 
 def submit_locally(template, conf):
@@ -102,23 +125,42 @@ def submit_locally(template, conf):
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
                                template, rand_hash, submit_func)
 
-    program = ("spark-submit --master {0} {1}\n") \
-            .format(master_url, conf["DRIVER"]["program"])
-    p = Popen(program.split(), stdout=PIPE, stderr=PIPE)
+    program = ["spark-submit", "--master", master_url]
+
+    if "jars" in conf["DRIVER"]:
+        program.extend(["--jars", conf["DRIVER"]["jars"]])
+
+    program.append(conf["DRIVER"]["program"])
+
+    p = Popen(program, stdout=PIPE, stderr=PIPE)
     stdin, stderr = p.communicate()
     print(stdin, stderr)
 
 
 def submit_pilots(template, conf):
 
+    print(time.time())
     submit_func = "sbatch"
     rand_hash = gen_hash(template)
-    job_id = '${SLURM_JOB_ID}'
+    slurm_job_id = '${SLURM_JOB_ID}'
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
-    program_start = configure(conf, job_id, rand_hash)
+    program_start = configure(conf, slurm_job_id, rand_hash)
+    jobs = []
+
+    if conf["DRIVER"]["deploy"] == "cluster":
+        program = ["\'spark-submit", "--master", "$MASTER_URI",
+                   "--executor-cores=${SLURM_CPUS_PER_TASK}",
+                   "--executor-memory=${SLURM_SPARK_MEM}M",
+                   "--deploy-mode cluster"]
+
+        if "jars" in conf["DRIVER"]:
+            program.extend(["--jars", conf["DRIVER"]["jars"]])
+
+        program.extend([conf["DRIVER"]["program"], "\'"])
+        conf["COMPUTE"]["driver_prog"] = " ".join(program)
 
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
-                               template, rand_hash, "sbatch", conf["DRIVER"])
+                               template, rand_hash, "sbatch", jobs)
 
     # PySpark is only possible in client mode, therefore deploying driver
     # in a slurm interactive node as a temporary solution
@@ -134,11 +176,18 @@ def submit_pilots(template, conf):
             p.stdin.write("module load {}\n".format(module).encode('utf-8'))
 
         p.stdin.write("echo start $(date +%s.%N)\n".encode('utf-8'))
-        program = ("spark-submit --master {0} "
-                   "--executor-cores=${{SLURM_CPUS_PER_TASK}} "
-                   "--executor-memory=${{SLURM_MEM_PER_NODE}}M  "
-                   "--driver-memory=${{SLURM_MEM_PER_NODE}}M {1}\n") \
-            .format(master_url, conf["DRIVER"]["program"])
+
+        program = ["spark-submit", "--master", master_url,
+                   "--executor-cores=${SLURM_CPUS_PER_TASK}",
+                   "--executor-memory=${SLURM_MEM_PER_NODE}M"]
+        
+        if "jars" in conf["DRIVER"]:
+            program.extend(["--jars", conf["DRIVER"]["jars"]])
+
+        program.extend([conf["DRIVER"]["program"], "\n"])
+
+        program = " ".join(program)
+
         p.stdin.write(program.encode('utf-8'))
 
         out = fr.read()
@@ -149,6 +198,54 @@ def submit_pilots(template, conf):
         fw.close()
         fr.close()
 
+    else:
+        driver_rest = ""
+        while not op.isfile(conf["COMPUTE"]["drvr_log"]):
+            print("driver log not created")
+            time.sleep(5)
+        with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
+            driver_rest = f.readline().strip(os.linesep)
+
+        r = requests.get(driver_rest)
+        driver_api = r.json()
+        print(driver_api)
+
+        while (driver_api["driverState"] == "SUBMITTED"):
+            time.sleep(5)
+            r = requests.get(driver_rest)
+            driver_api = r.json()
+            print(driver_api)
+
+        while (driver_api["driverState"] == "RUNNING"):
+            p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
+            (out, err) = p.communicate()
+            print("stdout", out)
+            print("stderr", err)
+            out = str(out, 'utf-8')
+
+            running_jobs = out.split(os.linesep)
+            running_jobs = [l.split(' ')[0] for l in running_jobs if l.split(' ')[0] != '']
+
+            print('Running jobs:', running_jobs)
+            jobs = list(set(jobs).intersection(running_jobs))
+            print(jobs)
+
+            nodes_to_start = conf["num_nodes"] - len(jobs)
+
+            if nodes_to_start > 0:
+                master_url = start_workers(s, nodes_to_start, conf["COMPUTE"],
+                                           template, rand_hash, "sbatch", jobs)
+
+            time.sleep(5 * 60)
+            r = requests.get(driver_rest)
+            driver_api = r.json()
+            print(driver_api)
+
+        p = Popen(["scancel"].extend(jobs), stdout=PIPE, stderr=PIPE)
+        (out, err) = p.communicate()
+
+        print(out, err)
+        print(time.time())
 
 def main():
 
