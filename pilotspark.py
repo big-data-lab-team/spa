@@ -89,12 +89,18 @@ def configure(conf, job_id, rand_hash):
 
 
 def submit_sbatch(template, conf):
-    print(time.time())
+
+    if "benchmark" in conf:
+        with open(conf["benchmark"], 'a+') as f:
+            f.write(os.linesep + datetime.now().isoformat() +
+                    '\t' + str(time.time()))
+
     submit_func = "sbatch"
     rand_hash = "" #gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
     configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
+    conf["DRIVER"]["mstr_bench"] = conf["COMPUTE"]["mstr_bench"]
     job_id = s.run(template, cmd_kwargs=conf["DRIVER"], _cmd=submit_func)
 
     job_id = str(job_id)
@@ -110,14 +116,17 @@ def submit_sbatch(template, conf):
         queue = [l.split(' ')[0] for l in out if l.split(' ') != '']
 
         condition = job_id in queue
+        time.sleep(5 * 60)
 
-    print(time.time())
+    if "benchmark" in conf:
+        with open(conf["benchmark"], 'a+') as f:
+            f.write('\t' + str(time.time()))
 
 
 def submit_locally(template, conf):
 
     submit_func = "bash"
-    rand_hash = gen_hash(template) 
+    rand_hash = gen_hash(template)
     job_id = ""
 
     configure(conf, job_id, rand_hash)
@@ -138,8 +147,11 @@ def submit_locally(template, conf):
 
 
 def submit_pilots(template, conf):
-
-    print(time.time())
+    
+    if "benchmark" in conf:
+        with open(conf["benchmark"], 'a+') as f:
+            f.write(os.linesep + datetime.now().isoformat() + '\t' + 
+                    str(time.time()))
     submit_func = "sbatch"
     rand_hash = gen_hash(template)
     slurm_job_id = '${SLURM_JOB_ID}'
@@ -237,15 +249,27 @@ def submit_pilots(template, conf):
                                            template, rand_hash, "sbatch", jobs)
 
             time.sleep(5 * 60)
-            r = requests.get(driver_rest)
-            driver_api = r.json()
-            print(driver_api)
 
-        p = Popen(["scancel"].extend(jobs), stdout=PIPE, stderr=PIPE)
-        (out, err) = p.communicate()
+            try:
+                r = requests.get(driver_rest)
+                driver_api = r.json()
+                print(driver_api)
+
+            except Exception as e:
+                print(str(e))
+                break
+
+        if len(jobs) > 0:
+            args = ["scancel"]
+            args.extend(jobs)
+            print(args)
+            p = Popen(args, stdout=PIPE, stderr=PIPE)
+            (out, err) = p.communicate()
 
         print(out, err)
-        print(time.time())
+    if "benchmark" in conf:
+        with open(conf["benchmark"], 'a+') as f:
+            f.write('\t' + str(time.time()))
 
 def main():
 

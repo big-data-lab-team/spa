@@ -1,8 +1,7 @@
 #!/bin/bash
 
-spscript="--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/scalaout 1"
-
 echo start $(date +%s.%N) > $mstr_bench
+echo $mstr_bench > singlenodes.out
 
 module load spark/2.3.0
 
@@ -10,6 +9,7 @@ export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=$SLURM_TMPDIR
 export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_NODE} * 0.95" | bc)
 export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
+echo ${SLURM_SPARK_MEM}
 
 start-master.sh
 while [ -z "$MASTER_URL" ]
@@ -19,7 +19,7 @@ do
 	sleep 5
 done
 
-NWORKERS=$((SLURM_NTASKS))
+NWORKERS=$((SLURM_NTASKS - 1))
 
 SPARK_NO_DAEMONIZE=1 srun -n ${NWORKERS} -N ${NWORKERS} --label --output=$SPARK_LOG_DIR/spark-%j-workers.out start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} ${MASTER_URL} &
 slaves_pid=$!

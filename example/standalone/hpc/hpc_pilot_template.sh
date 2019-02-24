@@ -86,7 +86,7 @@ start_time=0
 
 while true; do
     cores_in_use=$([[ $(curl -s $WORKER_UI | jq -r ".coresused") == "0" ]] && { echo false; } || { echo true; })
-    executors_complete=$([[ $(curl -s $WORKER_UI | jq -r ".finishedexecutor" | jq "if length = 0 then 'true' else 'false' end") == "true" ]] && { echo false; } || { echo true; })
+    executors_complete=$([[ $(curl -s $WORKER_UI | jq -r ".finishedexecutor" | jq 'if length = 0 then "true" else "false" end') == "true" ]] && { echo false; } || { echo true; })
 
     echo 'executor running'
     echo "cores in use: " $cores_in_use
