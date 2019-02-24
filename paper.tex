@@ -25,7 +25,27 @@
 \maketitle
 
 \begin{abstract}
-    \todo{complete}
+    With the recent influx of neuroimaging Big Data, many researchers are moving
+    towards adopting Big Data processing engines such as Apache Spark 
+    to process the data. These processing engines, however, have been primarily 
+    designed to work on dedicated infrastructure and are not well designed to 
+    work on infrastructure typically available to researchers, such as 
+    High-Performance Computing (HPC) infrastructure. Typical mechanisms for 
+    launching Spark-based applications on HPC clusters involve batch-requesting
+    of the resources which can greatly increase queueing times of the Big Data 
+    applications. Pilot-scheduling techniques is a well known HPC scheduling
+    strategy that begins scheduling as compute resources are allocated to the 
+    user, thereby reducing HPC scheduling wait times. Here, we introduce SPA, an
+    open-source
+    pilot-job submission system designed for launching Apache Spark pipelines 
+    on Slurm-based clusters. SPA leverages optimizations available in Spark, 
+    such as robust workers, masters and driver, in addition to checkpointing, 
+    to ensure that processing occurs even when nodes are lost due to timeout. 
+    SPA also ensures that a user-specified number of pilots (nodes) have been 
+    requested on the cluster in order to ensure a constant level of parallelism.
+    Should pilots be idle for a certain amount of time, they are terminated by 
+    the system.
+
 \end{abstract}
 
 \section{Introduction}
