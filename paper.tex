@@ -52,6 +52,79 @@
 \end{abstract}
 
 \section{Introduction}
+
+In the recent years, neuroimaging Big Data has become more accessible, as a
+result of the growing number of open-data initiatives\cite{openneuro, hcp, ukbiobank}. However, the
+processing of such large datasets using standard neuroimaging pipelines has 
+become unfeasable. As a result, many researchers are moving towards Big Data 
+engines, such as Apache Spark and Dask\cite{spark, dask}, to create their processing pipelines. 
+Unlike traditional neuroimaging engines, big data engines were designed to be 
+executed on dedicated commodity infrastructures using Big Data schedulers. Although
+researchers may have access to clouds or local workstations, they still largely 
+rely on High Performance Computing (HPC) infrastructure to process their data.
+
+High-Performance Computing infrastructure differs from the commodity infrastructure 
+typically used by Big Data platforms in that it is not dedicated. That is, there 
+are multiple users running a variety of different applications and all using the 
+same resources. Schedulers used on HPC infrastructure include PBS, SGE, Slurm, HTCondor and 
+TORQUE\cite{schedulers}. The majority of these being batch submission schedulers
+in which the number of resources are requested by the user and the specified 
+program is executed on the infrastructure.
+
+Another popular HPC scheduling approach,
+as implemented by HTCondor, is known as pilot-scheduling. Rather than requesting
+all necessary resources in a single batch call, a pilot-scheduling system will request
+multiple instances of subsets of the required resources. Processing starts occuring 
+as soon as a minimal amount of resources are allocated, and can be replenished if 
+resources are lost. Such a scheduling approach
+decreases the time a user spends in the queue waiting for resources as less resources
+are being requested per instance.\todo{need citation}. Many scientific workflow
+engines are compatible with pilot-scheduling schedulers \cite{nipype and others} and
+some others exclusively use pilot-scheduling approaches \cite{Pegasus and PSOM}. 
+
+Apache Spark is a popular Big Data framework, commonly used in both industrial
+and academic settings. Although it is a Scala-based framework, it also has APIs
+for Java, Python (PySpark) and R. What made it powerful over its predecessors is their main
+abstraction known as the Resilient Distributed Dataset (RDD), which enabled
+in-memory processing of pipelines by scheduling the tasks to where the data is 
+located. Through the use of RDDs, it also became possible to execute iterative 
+workflows -- something not easily doable in older frameworks such as Hadoop MapReduce.
+Schedulers for Spark include its built-in standalone schedule, Yet Another Resource Negotiator (YARN),
+and Mesos \cite{yarn, mesos}. Out of the three schedulers, only Mesos can be used
+as an HPC scheduler. However, Mesos is not frequently used as a scheduler in HPC
+environments.
+
+Although still not widely adopted possibly due to the difficulties in adopting Big Data frameworks on HPC \todo{better explain the difficulties...setting walltimes etc. also explain neuroimaging applications},
+projects, such as Thunder, a PySpark-compatible library of tools from processing
+images and time-series data of various fields, including neuroscience, exist. In addition,
+Spark has been used in various research projects to process neuroimaging data \cite{Boubela, ariel's paper, maybe the simulation one}.
+
+The recommended method for launching Spark applications on our HPC scheduler 
+involves batch requesting all the necessary resources and launching a Standalone
+Spark cluster once the resources have been requested. This could significantly increase
+the scheduling time of Spark-based applications as a large amount of resources 
+may be necessary to process Big Data. Rather than requesting all the resources 
+at once, a Spark cluster is launched with a subset of the resources and is expanded as 
+more resources get allocated. This, in turn, may reduce the overall processing of
+an application as less resources are requested at once and are therefore more likely
+to be scheduled faster.
+
+There have been some efforts to use pilot-scheduling approaches with Spark applications
+running on HPC \cite{jha and spark on pbs paper}. However, these projects are either
+not open-source and not necessarily compatible with Slurm.
+
+Here we present SPA, a pilot-scheduling library for launching Spark applications 
+on HPC infrastracture. This libary currently enables the launching of Spark applications
+on Slurm-based clusters by dividing the total amount of resources required and requesting
+multiple instances of subsets of the resources at a time. When a single instance is started,
+a Standalone Spark cluster is started. Built-in fault-tolerance of Spark masters 
+and workers is leveraged, in addition to Driver fault tolerance for Scala-based applications.
+When nodes are lost due to walltime expiration, additional pilot nodes are launched until
+the driver completes. Using this system, it is more feasible to run large neuroimaging Spark applications on
+HPC systems.
+
+
+
 \section{Materials and Methods}\label{sec:methods}
     \todo{walltime parameter of workflow}
     \subsection{Added value of pilot scheduling}
