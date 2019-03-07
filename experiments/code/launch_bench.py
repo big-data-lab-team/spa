@@ -8,6 +8,7 @@ import time
 import shutil
 
 
+iterations = 1
 num_chunks = 125
 template_dir = "example/standalone/hpc/"
 cond_dir = "/home/vhayots/project/vhayots/spa-temp/experiments/code/conditions"
@@ -57,10 +58,28 @@ experiments = [
                 }
               ]
 
+def get_results(sp, tmp_file, launch, cond, out_dir):
+    sp.wait()
+    tmp_file.seek(0)
+
+    with open(op.join(getcwd(), 'lb_{0}_{1}.out'.format(launch, 'cond')), 'a+') as f:
+        f.write(str(tmp_file.read(), 'utf-8'))
+        num_files = len([name for name in listdir(out_dir) if op.isfile(op.join(out_dir, name))])
+
+        status = None
+        if num_files != num_chunks:
+            status = "FAILED"
+        else:
+            status = "PASSED"
+    f.write('***** {0} Experiment {1} : {2} {3}*****'.format(launch, ' '.join(exps[launch]),
+                                                                              status, num_files))
+    tmp_file.close()
+
+
 shuffle(experiments)
 
 count = 0 
-while count < 3 :
+while count < iterations :
     for exps in experiments:
         print(exps['batch'])
         print(exps['pilot'])
@@ -70,29 +89,8 @@ while count < 3 :
         y = Popen(exps['pilot'], stdout=f_pilot, stderr=f_pilot)
 
         try:
-            x.wait()
-            f_batch.seek(0)
-            with open(op.join(getcwd(), 'lb_batch_{}.out'.format(exps['cond'])), 'a+') as f:
-                f.write(str(f_batch.read(), 'utf-8'))
-                num_files = len([name for name in listdir(batch_out) if op.isfile(op.join(batch_out, name))])
-
-                if num_files != num_chunks:
-                    f.write('***** Batch Experiment {} : FAILED*****'.format(' '.join(exps['batch'])))
-                else:
-                    f.write('***** Batch Experiment {} : PASSED*****'.format(' '.join(exps['batch'])))
-            f_batch.close()
-
-            y.wait()
-            f_pilot.seek(0)
-            with open(op.join(getcwd(), 'lb_pilot_{}.out'.format(exps['cond'])), 'a+') as f:
-                f.write(str(f_pilot.read(), 'utf-8'))
-                num_files = len([name for name in listdir(pilot_out) if op.isfile(op.join(pilot_out, name))])
-
-                if num_files != num_chunks:
-                    f.write('***** Pilot Experiment {} : FAILED*****'.format(' '.join(exps['pilot'])))
-                else:
-                    f.write('***** Pilot Experiment {} : PASSED*****'.format(' '.join(exps['pilot'])))
-            f_pilot.close()
+            get_results(x, f_batch, "batch", exps['cond'], batch_out)
+            get_results(y, f_pilot, "pilot", exps['cond'], pilot_out)
             shutil.rmtree(batch_out)
             shutil.rmtree(pilot_out)
 

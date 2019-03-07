@@ -13,6 +13,17 @@ import threading
 import requests
 
 
+def write_bench_start(bench):
+    with open(bench, 'a+') as f:
+        f.write(",".join([os.linesep + datetime.now().isoformat(),
+                          str(time.time())])
+
+
+def write_bench_end(bench):
+    with open(bench, 'a+') as f:
+        f.write(',{}'.format(str(time.time())))
+
+
 def gen_hash(template):
     return '{0}-{1}'.format(
             hashlib.sha1(template.encode("utf-8")).hexdigest(),
@@ -91,9 +102,7 @@ def configure(conf, job_id, rand_hash):
 def submit_sbatch(template, conf):
 
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write(os.linesep + datetime.now().isoformat() +
-                    '\t' + str(time.time()))
+        write_bench_start(conf["benchmark"])
 
     submit_func = "sbatch"
     rand_hash = "" #gen_hash(template)
@@ -105,12 +114,15 @@ def submit_sbatch(template, conf):
 
     job_id = str(job_id)
     condition = True
+    time.sleep(5)
 
     while condition:
         p = Popen(["squeue", "-j", job_id], stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
-
         out = str(out, 'utf-8')
+
+        print("Squeue output: ", out)
+
         out = out.split(os.linesep)
         out.pop(0)
         queue = [l.split(' ')[0] for l in out if l.split(' ') != '']
@@ -119,8 +131,7 @@ def submit_sbatch(template, conf):
         time.sleep(5 * 60)
 
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write('\t' + str(time.time()))
+        write_bench_end(conf["benchmark"])
 
 
 def submit_locally(template, conf):
@@ -241,16 +252,16 @@ def submit_pilots(template, conf):
         while (driver_api is not None and driver_api["driverState"] == "RUNNING"):
             p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
-            print("stdout", out)
-            print("stderr", err)
             out = str(out, 'utf-8')
+            err = str(err, 'utf-8')
+            print("stdout: ", out)
+            print("stderr: ", err)
 
             running_jobs = out.split(os.linesep)
             running_jobs = [l.split(' ')[0] for l in running_jobs if l.split(' ')[0] != '']
 
             print('Running jobs:', running_jobs)
             jobs = list(set(jobs).intersection(running_jobs))
-            print(jobs)
 
             nodes_to_start = conf["num_nodes"] - len(jobs)
 
@@ -272,14 +283,15 @@ def submit_pilots(template, conf):
         if len(jobs) > 0:
             args = ["scancel"]
             args.extend(jobs)
-            print(args)
+            print('Cancelling jobs:', args)
             p = Popen(args, stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
+            print(str(out, 'utf-8'), str(err, 'utf-8'))
 
-        print(out, err)
     if "benchmark" in conf:
         with open(conf["benchmark"], 'a+') as f:
             f.write('\t' + str(time.time()))
+
 
 def main():
 
