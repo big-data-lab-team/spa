@@ -212,23 +212,33 @@ def submit_pilots(template, conf):
 
     else:
         driver_rest = ""
+        driver_api = None
         while not op.isfile(conf["COMPUTE"]["drvr_log"]):
             print("driver log not created")
             time.sleep(5)
         with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
             driver_rest = f.readline().strip(os.linesep)
 
-        r = requests.get(driver_rest)
-        driver_api = r.json()
-        print(driver_api)
-
-        while (driver_api["driverState"] == "SUBMITTED"):
-            time.sleep(5)
+        time.sleep(5)
+        try:
             r = requests.get(driver_rest)
             driver_api = r.json()
             print(driver_api)
+        except Exception as e:
+            print(str(e))
 
-        while (driver_api["driverState"] == "RUNNING"):
+        while (driver_api is not None and driver_api["driverState"] == "SUBMITTED"):
+            time.sleep(5)
+
+            try:
+                r = requests.get(driver_rest)
+                driver_api = r.json()
+                print(driver_api)
+            except Exception as e:
+                print(str(e))
+                break
+
+        while (driver_api is not None and driver_api["driverState"] == "RUNNING"):
             p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
             print("stdout", out)

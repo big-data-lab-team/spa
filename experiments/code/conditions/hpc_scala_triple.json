@@ -1,0 +1,17 @@
+{
+    "name": "scala bigbrain incrementation",
+    "logdir": "/scratch/vhayots/spa/logs",
+    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa-temp/batch_3dedicated.out",
+    "SLURM_CONF_GLOBAL": {
+	"account": "def-glatard",
+        "time": "02:30:00",
+        "nodes": 3,
+        "mem": "112G",
+        "cpus-per-task": 16,
+        "ntasks-per-node": 1
+    },
+    "DRIVER": {
+        "modules": ["spark/2.3.0"],
+        "program": "'--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa-temp/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/scalaout2 10 --delay 120'"
+    }
+}
