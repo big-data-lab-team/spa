@@ -1,5 +1,5 @@
 {
-    "name": "scala bigbrain incrementation",
+    "name": "batch2d bb inc",
     "logdir": "/scratch/vhayots/spa/logs",
     "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa-temp/batch_2dedicated.out",
     "SLURM_CONF_GLOBAL": {

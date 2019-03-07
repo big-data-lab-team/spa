@@ -1,5 +1,5 @@
 {
-    "name": "pilot scala bigbrain incrementation",
+    "name": "8p1d bb inc",
     "logdir": "/scratch/vhayots/spa/logs",
     "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa-temp/8nodes_2dedicated.out",
     "num_nodes": 8,
