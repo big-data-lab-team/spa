@@ -8,11 +8,12 @@ import time
 import shutil
 
 
-iterations = 1
+iterations = 4
 num_chunks = 125
-template_dir = "example/standalone/hpc/"
-cond_dir = "/home/vhayots/project/vhayots/spa-temp/experiments/code/conditions"
-application = "/home/vhayots/project/vhayots/spa-temp/pilotspark.py"
+project_dir = "/home/vhayots/project/vhayots/spa-temp/"
+template_dir = op.join(project_dir, "example/standalone/hpc/")
+cond_dir = op.join(project_dir, "experiments/code/conditions")
+application = op.join(project_dir, "pilotspark.py")
 hpc_batch_template_multin = op.join(template_dir, "hpc_batch_template.sh")
 hpc_pilot_template = op.join(template_dir, "hpc_pilot_template.sh")
 batch_out = '/scratch/vhayots/scalaout2'
@@ -71,15 +72,15 @@ def get_results(sp, tmp_file, launch, cond, out_dir):
             status = "FAILED"
         else:
             status = "PASSED"
-    f.write('***** {0} Experiment {1} : {2} {3}*****'.format(launch, ' '.join(exps[launch]),
-                                                                              status, num_files))
+        f.write('***** {0} Experiment {1} : {2} {3}*****'.format(launch, ' '.join(exps[launch]),
+                                                                                  status, num_files))
     tmp_file.close()
 
 
-shuffle(experiments)
 
 count = 0 
 while count < iterations :
+    shuffle(experiments)
     for exps in experiments:
         print(exps['batch'])
         print(exps['pilot'])

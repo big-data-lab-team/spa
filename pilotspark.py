@@ -16,7 +16,7 @@ import requests
 def write_bench_start(bench):
     with open(bench, 'a+') as f:
         f.write(",".join([os.linesep + datetime.now().isoformat(),
-                          str(time.time())])
+                          str(time.time())]))
 
 
 def write_bench_end(bench):
@@ -160,9 +160,8 @@ def submit_locally(template, conf):
 def submit_pilots(template, conf):
     
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write(os.linesep + datetime.now().isoformat() + '\t' + 
-                    str(time.time()))
+        write_bench_start(conf["benchmark"])
+
     submit_func = "sbatch"
     rand_hash = gen_hash(template)
     slurm_job_id = '${SLURM_JOB_ID}'
@@ -257,6 +256,9 @@ def submit_pilots(template, conf):
             print("stdout: ", out)
             print("stderr: ", err)
 
+            if 'send/recv' in out or 'send/recv' in err:
+                continue
+        
             running_jobs = out.split(os.linesep)
             running_jobs = [l.split(' ')[0] for l in running_jobs if l.split(' ')[0] != '']
 
@@ -289,8 +291,7 @@ def submit_pilots(template, conf):
             print(str(out, 'utf-8'), str(err, 'utf-8'))
 
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write('\t' + str(time.time()))
+        write_bench_end(conf["benchmark"])
 
 
 def main():
