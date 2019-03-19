@@ -1,0 +1,452 @@
+[
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-09T23:12:35.819085",
+      "start_time": 1552191155.8191013,
+      "end_time": 1552201073.767086,
+      "success": true,
+      "sid": [
+         {
+            "id": 12450117,
+            "start_time": 1552193369.9552987,
+            "end_time": 1552200523.7909377,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-10T01:58:03.695362",
+      "start_time": 1552201083.6954525,
+      "end_time": 1552211931.296362,
+      "success": false,
+      "sid": [
+         {
+            "id": 12452991,
+            "start_time": 1552202415.8380597,
+            "end_time": null,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-10T05:59:00.853582",
+      "start_time": 1552211940.8536007,
+      "end_time": 1552212546.352725,
+      "success": false,
+      "sid": [
+         {
+            "id": 12454174,
+            "start_time": 1552212089.1663136,
+            "end_time": 1552212175.6704562,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-10T06:09:06.706337",
+      "start_time": 1552212546.7063503,
+      "end_time": 1552221266.2194264,
+      "success": true,
+      "sid": [
+         {
+            "id": 12454224,
+            "start_time": 1552213499.2925513,
+            "end_time": 1552220819.513046,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-10T08:34:31.564995",
+      "start_time": 1552221271.565011,
+      "end_time": 1552221876.911538,
+      "success": false,
+      "sid": [
+         {
+            "id": 12456718,
+            "start_time": 1552221272.8036923,
+            "end_time": 1552221416.4294775,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-10T10:11:29.294797",
+      "start_time": 1552227089.294833,
+      "end_time": 1552236413.7140744,
+      "success": true,
+      "sid": [
+         {
+            "id": 12457488,
+            "start_time": 1552227090.6864433,
+            "end_time": 1552235995.4046407,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-10T22:51:39.390405",
+      "start_time": 1552272699.3904238,
+      "end_time": 1552292534.155706,
+      "success": false,
+      "sid": [
+         {
+            "id": 12470345,
+            "start_time": 1552291974.1516926,
+            "end_time": 1552292046.668787,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-11T04:22:24.422699",
+      "start_time": 1552292544.4227293,
+      "end_time": 1552294351.9725802,
+      "success": false,
+      "sid": [
+         {
+            "id": 12476069,
+            "start_time": 1552293764.5653398,
+            "end_time": 1552293824.4892232,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-11T06:19:40.240527",
+      "start_time": 1552299580.2405505,
+      "end_time": 1552308901.2682505,
+      "success": true,
+      "sid": [
+         {
+            "id": 12477497,
+            "start_time": 1552299584.0626636,
+            "end_time": 1552308474.7820864,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-11T08:55:04.858668",
+      "start_time": 1552308904.8586872,
+      "end_time": 1552318239.1431434,
+      "success": true,
+      "sid": [
+         {
+            "id": 12479820,
+            "start_time": 1552308908.2593608,
+            "end_time": 1552317823.7038183,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-11T11:30:44.836234",
+      "start_time": 1552318244.8362637,
+      "end_time": 1552326987.0426497,
+      "success": true,
+      "sid": [
+         {
+            "id": 12485264,
+            "start_time": 1552320593.5082195,
+            "end_time": 1552326445.7917998,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-11T13:56:33.383966",
+      "start_time": 1552326993.384008,
+      "end_time": 1552372738.0264466,
+      "success": true,
+      "sid": [
+         {
+            "id": 12490476,
+            "start_time": 1552364880.0903833,
+            "end_time": 1552372355.9798722,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-12T02:39:02.754320",
+      "start_time": 1552372742.754403,
+      "end_time": 1552373651.2178965,
+      "success": false,
+      "sid": [
+         {
+            "id": 12508631,
+            "start_time": 1552373167.2695146,
+            "end_time": 1552373321.3585656,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-12T04:27:58.046259",
+      "start_time": 1552379278.0462868,
+      "end_time": 1552380184.5203128,
+      "success": false,
+      "sid": [
+         {
+            "id": 12510439,
+            "start_time": 1552379656.7811844,
+            "end_time": 1552379731.9576855,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-12T06:16:16.184863",
+      "start_time": 1552385776.184893,
+      "end_time": 1552394799.2010329,
+      "success": true,
+      "sid": [
+         {
+            "id": 12511110,
+            "start_time": 1552386988.0962536,
+            "end_time": 1552394227.6194036,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-12T08:46:44.930895",
+      "start_time": 1552394804.9309916,
+      "end_time": 1552404424.5685735,
+      "success": true,
+      "sid": [
+         {
+            "id": 12512204,
+            "start_time": 1552395089.3476248,
+            "end_time": 1552404104.74067,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-12T11:27:09.241055",
+      "start_time": 1552404429.2411842,
+      "end_time": 1552411045.6989703,
+      "success": true,
+      "sid": [
+         {
+            "id": 12514788,
+            "start_time": 1552404865.908544,
+            "end_time": 1552410544.9740899,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-12T13:17:32.672504",
+      "start_time": 1552411052.6725347,
+      "end_time": 1552420993.0399616,
+      "success": false,
+      "sid": [
+         {
+            "id": 12518516,
+            "start_time": 1552411353.3131893,
+            "end_time": null,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-12T16:03:18.055128",
+      "start_time": 1552420998.055163,
+      "end_time": 1552424017.7595148,
+      "success": false,
+      "sid": [
+         {
+            "id": 12523718,
+            "start_time": 1552423593.7870462,
+            "end_time": 1552423711.7664325,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-12T18:58:54.512247",
+      "start_time": 1552431534.5122843,
+      "end_time": 1552454678.1412165,
+      "success": true,
+      "sid": [
+         {
+            "id": 12529886,
+            "start_time": 1552445548.7846692,
+            "end_time": 1552454195.2512941,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-13T01:24:44.396739",
+      "start_time": 1552454684.3968513,
+      "end_time": 1552460998.0562494,
+      "success": true,
+      "sid": [
+         {
+            "id": 12538653,
+            "start_time": 1552454905.93454,
+            "end_time": 1552460554.518836,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-13T03:10:03.852868",
+      "start_time": 1552461003.8529713,
+      "end_time": 1552463413.3945625,
+      "success": false,
+      "sid": [
+         {
+            "id": 12540314,
+            "start_time": 1552462838.3836813,
+            "end_time": 1552462943.209975,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-13T05:27:32.589602",
+      "start_time": 1552469252.5899382,
+      "end_time": 1552480981.656209,
+      "success": true,
+      "sid": [
+         {
+            "id": 12542512,
+            "start_time": 1552474616.4926631,
+            "end_time": 1552480378.3705008,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-13T08:43:07.115908",
+      "start_time": 1552480987.1159406,
+      "end_time": 1552490320.107323,
+      "success": true,
+      "sid": [
+         {
+            "id": 12544601,
+            "start_time": 1552481139.5033317,
+            "end_time": 1552489841.2344754,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-13T11:18:44.699033",
+      "start_time": 1552490324.6990583,
+      "end_time": 1552564874.7640684,
+      "success": true,
+      "sid": [
+         {
+            "id": 12549581,
+            "start_time": 1552555665.3351486,
+            "end_time": 1552564479.8145297,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-14T08:01:25.514151",
+      "start_time": 1552564885.5142672,
+      "end_time": 1552565490.81758,
+      "success": false,
+      "sid": [
+         {
+            "id": 12578091,
+            "start_time": 1552564974.5303035,
+            "end_time": 1552565041.4615178,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-14T09:49:52.704988",
+      "start_time": 1552571392.7050962,
+      "end_time": 1552578019.058425,
+      "success": true,
+      "sid": [
+         {
+            "id": 12580033,
+            "start_time": 1552571877.3392646,
+            "end_time": 1552577608.670033,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_single",
+      "timestamp": "2019-03-14T11:40:25.012782",
+      "start_time": 1552578025.0128284,
+      "end_time": 1552609656.929305,
+      "success": false,
+      "sid": [
+         {
+            "id": 12583347,
+            "start_time": 1552609031.1664903,
+            "end_time": 1552609142.443198,
+            "succeeded": false
+         }
+      ]
+   },
+   {
+      "name": "batch_triple",
+      "timestamp": "2019-03-14T20:27:42.601659",
+      "start_time": 1552609662.601772,
+      "end_time": 1552623242.3251724,
+      "success": true,
+      "sid": [
+         {
+            "id": 12604776,
+            "start_time": 1552616950.0245378,
+            "end_time": 1552622727.2435243,
+            "succeeded": true
+         }
+      ]
+   },
+   {
+      "name": "batch_double",
+      "timestamp": "2019-03-15T00:14:08.075172",
+      "start_time": 1552623248.0752046,
+      "end_time": 1552632888.610258,
+      "success": true,
+      "sid": [
+         {
+            "id": 12608102,
+            "start_time": 1552623411.4923646,
+            "end_time": 1552632318.4021776,
+            "succeeded": true
+         }
+      ]
+   }
+]
