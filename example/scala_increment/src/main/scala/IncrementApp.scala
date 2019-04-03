@@ -7,6 +7,8 @@ import java.io.File
 import java.io.DataInputStream
 import com.ericbarnhill.niftijio.NiftiVolume
 import com.ericbarnhill.niftijio.NiftiHeader
+import java.lang.System
+import scala.math.pow
 
 object IncrementApp {
   val usage = """
@@ -15,16 +17,21 @@ object IncrementApp {
 
   def readImg( filename:String, data:PortableDataStream )
     : Tuple2[String, NiftiVolume] = {
+    val t0 = System.nanoTime()
     val niftibytes = data.open()
+    println(filename)
     val volume = NiftiVolume.read(niftibytes, filename)
     niftibytes.close()
+    val t1 = System.nanoTime()
+
+    println("Elapsed load time: " + (t1 - t0).toDouble * pow(10, 9) + "s")
     return (new File(filename).getName(), volume)
   }
 
   def incrementData( filename:String, volume: NiftiVolume, sleep: Int )
     : Tuple2[String, NiftiVolume] = {
 
-
+    val t0 = System.nanoTime()
     for( i <- 0 to volume.data.sizeX - 1) {
       for( j <- 0 to volume.data.sizeY - 1) {
         for( k <- 0 to volume.data.sizeZ - 1) {
@@ -34,14 +41,21 @@ object IncrementApp {
         }
       }
     }
-    Thread.sleep(sleep * 1000)
+    val t1 = System.nanoTime()
+    Thread.sleep((sleep - ((t1 - t0).toDouble / pow(10, 9))).toLong * 1000)
+
+    val t2 = System.nanoTime()
+    println("Elapsed inc time: " + (t2 - t0).toDouble * pow(10, 9) + "s")
     return (filename, volume )
   }
 
   def saveData( fn: String, volume: NiftiVolume )
     : Tuple2[String, String] = {
 
+    val t0 = System.nanoTime()
     volume.write(fn)
+    val t1 = System.nanoTime()
+    println("Elapsed write time: " + (t1 - t0).toDouble * pow(10, 9) + "s")
 
     return (fn, "SUCCESS")
   }
@@ -71,6 +85,7 @@ object IncrementApp {
                                sys.exit(1)
       }
     }
+    println("Test")
     val options = nextArgument(Map(), arglist)
     
     val conf = new SparkConf().setAppName("Scala incrementation")
