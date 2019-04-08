@@ -85,7 +85,6 @@ object IncrementApp {
                                sys.exit(1)
       }
     }
-    println("Test")
     val options = nextArgument(Map(), arglist)
     
     val conf = new SparkConf().setAppName("Scala incrementation")

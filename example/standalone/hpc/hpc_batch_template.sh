@@ -11,6 +11,15 @@ export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_NODE} * 0.95" | bc)
 export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
 echo ${SLURM_SPARK_MEM}
 
+term_handler()
+{
+    stop-master.sh
+    echo end $(date +%s.%N) >> $mstr_bench
+
+	exit -1
+}
+trap 'term_handler' TERM
+
 start-master.sh
 while [ -z "$MASTER_URL" ]
 do

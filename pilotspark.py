@@ -11,6 +11,7 @@ import os
 import hashlib
 import threading
 import requests
+from copy import deepcopy
 
 
 def write_bench_start(bench):
@@ -22,6 +23,11 @@ def write_bench_start(bench):
 def write_bench_end(bench):
     with open(bench, 'a+') as f:
         f.write(',{}'.format(str(time.time())))
+
+
+def write_bench_result(bench, result):
+    with open(bench, 'a+') as f:
+        f.write(',{}'.format(result))
 
 
 def gen_hash(template):
@@ -101,13 +107,14 @@ def configure(conf, job_id, rand_hash):
 
 def submit_sbatch(template, conf):
 
+    hist_fn = op.abspath('batch_hist.out')
     if "benchmark" in conf:
         write_bench_start(conf["benchmark"])
 
     submit_func = "sbatch"
     rand_hash = "" #gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
-    configure(conf, job_id, rand_hash)
+    program_start = configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     conf["DRIVER"]["mstr_bench"] = conf["COMPUTE"]["mstr_bench"]
     job_id = s.run(template, cmd_kwargs=conf["DRIVER"], _cmd=submit_func)
@@ -115,6 +122,12 @@ def submit_sbatch(template, conf):
     job_id = str(job_id)
     condition = True
     time.sleep(5)
+
+    with open(hist_fn, 'a+') as f:
+        f.write(program_start)
+        f.write(conf["DRIVER"]["program"])
+        f.write(job_id)
+        f.write(os.linesep)
 
     while condition:
         p = Popen(["squeue", "-j", job_id], stdout=PIPE, stderr=PIPE)
@@ -159,6 +172,7 @@ def submit_locally(template, conf):
 
 def submit_pilots(template, conf):
     
+    hist_fn = op.abspath('pilot_hist.out')
     if "benchmark" in conf:
         write_bench_start(conf["benchmark"])
 
@@ -168,6 +182,7 @@ def submit_pilots(template, conf):
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     program_start = configure(conf, slurm_job_id, rand_hash)
     jobs = []
+    result = "UNKNOWN"
 
     if conf["DRIVER"]["deploy"] == "cluster":
         program = ["\'spark-submit", "--master", "$MASTER_URI",
@@ -183,6 +198,13 @@ def submit_pilots(template, conf):
 
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
                                template, rand_hash, "sbatch", jobs)
+
+    with open(hist_fn, 'a+') as f:
+        f.write(program_start)
+        f.write(conf["DRIVER"]["program"])
+        f.write(os.linesep)
+        f.write("\n".join(jobs))
+        f.write(os.linesep)
 
     # PySpark is only possible in client mode, therefore deploying driver
     # in a slurm interactive node as a temporary solution
@@ -226,8 +248,10 @@ def submit_pilots(template, conf):
         while not op.isfile(conf["COMPUTE"]["drvr_log"]):
             print("driver log not created")
             time.sleep(5)
-        with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
-            driver_rest = f.readline().strip(os.linesep)
+
+        while "spark://" not in driver_rest:
+            with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
+                driver_rest = f.readline().strip(os.linesep)
 
         time.sleep(5)
         try:
@@ -237,24 +261,25 @@ def submit_pilots(template, conf):
         except Exception as e:
             print(str(e))
 
-        while (driver_api is not None and driver_api["driverState"] == "SUBMITTED"):
+        while (driver_api is not None and "driverState" in driver_api and driver_api["driverState"] == "SUBMITTED"):
             time.sleep(5)
 
             try:
                 r = requests.get(driver_rest)
                 driver_api = r.json()
-                print(driver_api)
+                #print(driver_api)
             except Exception as e:
                 print(str(e))
                 break
 
-        while (driver_api is not None and driver_api["driverState"] == "RUNNING"):
+        while (driver_api is not None and "driverState" in driver_api
+               and driver_api["driverState"] == "RUNNING"):
             p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
             out = str(out, 'utf-8')
             err = str(err, 'utf-8')
-            print("stdout: ", out)
-            print("stderr: ", err)
+            #print("stdout: ", out)
+            #print("stderr: ", err)
 
             if 'send/recv' in out or 'send/recv' in err:
                 continue
@@ -266,17 +291,23 @@ def submit_pilots(template, conf):
             jobs = list(set(jobs).intersection(running_jobs))
 
             nodes_to_start = conf["num_nodes"] - len(jobs)
+            old_jobs = deepcopy(jobs)
 
             if nodes_to_start > 0:
                 master_url = start_workers(s, nodes_to_start, conf["COMPUTE"],
                                            template, rand_hash, "sbatch", jobs)
+                with open(hist_fn, 'a+') as f:
+                    f.write("\n".join([j for j in jobs if j not in old_jobs]))
+                    f.write(os.linesep)
 
             time.sleep(5 * 60)
 
             try:
                 r = requests.get(driver_rest)
                 driver_api = r.json()
-                print(driver_api)
+
+                result = driver_api["driverState"]
+                #print(driver_api)
 
             except Exception as e:
                 print(str(e))
@@ -292,6 +323,7 @@ def submit_pilots(template, conf):
 
     if "benchmark" in conf:
         write_bench_end(conf["benchmark"])
+        write_bench_result(conf["benchmark"], result)
 
 
 def main():

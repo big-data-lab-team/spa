@@ -12,6 +12,18 @@ export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
 
 echo $SLURM_SPARK_MEM
 
+term_handler()
+{
+    $SPARK_HOME/sbin/stop-slave.sh
+    $SPARK_HOME/sbin/stop-master.sh
+    #[ $LOCK_NODE ] && rm -f $mstr_lock
+    #[ -z $driverid ] && rm -f $drvr_lock
+    echo end $(date +%s.%N) >> $mstr_bench
+
+	exit -1
+}
+trap 'term_handler' TERM
+
 $SPARK_HOME/sbin/start-master.sh
 if [ ! -f $mstr_log ]; then
     lockfile -r 0 $mstr_lock

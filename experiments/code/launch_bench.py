@@ -8,7 +8,7 @@ import time
 import shutil
 
 
-iterations = 4
+iterations = 5
 num_chunks = 125
 project_dir = "/home/vhayots/project/vhayots/spa-temp/"
 template_dir = op.join(project_dir, "example/standalone/hpc/")
@@ -16,8 +16,9 @@ cond_dir = op.join(project_dir, "experiments/code/conditions")
 application = op.join(project_dir, "pilotspark.py")
 hpc_batch_template_multin = op.join(template_dir, "hpc_batch_template.sh")
 hpc_pilot_template = op.join(template_dir, "hpc_pilot_template.sh")
-batch_out = '/scratch/vhayots/scalaout2'
-pilot_out = '/scratch/vhayots/scalaout'
+batch_out = '/scratch/vhayots/spa/scalaout_batch'
+pilot8_out = '/scratch/vhayots/spa/scalaout_8pilots'
+pilot16_out = '/scratch/vhayots/spa/scalaout_16pilots'
 
 batch_single = [application, op.join(template_dir, "hpc_batch_singlenode.sh"),
                 op.join(cond_dir, "hpc_scala_single.json"), "-B"]
@@ -28,54 +29,52 @@ batch_triple = [application, hpc_batch_template_multin,
 
 experiments = [
                 {
-                    'cond' : '1dedicated_8p',
+                    'cond' : '1dedicated',
                     'batch': batch_single,
-                    'pilot' :[application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n1d_pilot.json")]
+                    '8pilot' :[application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n1d_pilot.json")],
+                    '16pilot': [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n1d_pilot.json")]
+
                 },
                 {
-                    'cond' : '1dedicated_16p',
-                    'batch' : batch_single,
-                    'pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n1d_pilot.json")]
-                },
-                {
-                    'cond' : '2dedicated_8p',
+                    'cond' : '2dedicated',
                     'batch' : batch_double,
-                    'pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n2d_pilot.json")]
+                    '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n2d_pilot.json")],
+                    '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n2d_pilot.json")]
                 },
                 {
-                    'cond' : '2dedicated_16p',
-                    'batch' : batch_double,
-                    'pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n2d_pilot.json")]
-                },
-                {
-                    'cond' : '3dedicated_8p',
+                    'cond' : '3dedicated',
                     'batch' : batch_triple,
-                    'pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n3d_pilot.json")]
-                },
-                {
-                    'cond' : '3dedicated_16p',
-                    'batch' : batch_triple,
-                    'pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n3d_pilot.json")]
+                    '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n3d_pilot.json")],
+                    '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n3d_pilot.json")]
                 }
               ]
 
 def get_results(sp, tmp_file, launch, cond, out_dir):
-    sp.wait()
-    tmp_file.seek(0)
+    try:
+        sp.wait()
+        tmp_file.seek(0)
 
-    with open(op.join(getcwd(), 'lb_{0}_{1}.out'.format(launch, 'cond')), 'a+') as f:
-        f.write(str(tmp_file.read(), 'utf-8'))
-        num_files = len([name for name in listdir(out_dir) if op.isfile(op.join(out_dir, name))])
+        out_log = op.join(getcwd(), 'lb_{0}_{1}.out'.format(launch, 'cond'))
+        print("Appending to logfile", out_log)
+        with open(out_log, 'a+') as f:
+            f.write(str(tmp_file.read(), 'utf-8'))
 
-        status = None
-        if num_files != num_chunks:
-            status = "FAILED"
-        else:
-            status = "PASSED"
-        f.write('***** {0} Experiment {1} : {2} {3}*****'.format(launch, ' '.join(exps[launch]),
-                                                                                  status, num_files))
-    tmp_file.close()
+            num_files = 0
+            min_fs = 0
+            if op.isdir(out_dir):
+                num_files = len([name for name in listdir(out_dir) if op.isfile(op.join(out_dir, name))])
+                min_fs = min([op.getsize(op.join(out_dir, name)) for name in listdir(out_dir) if op.isfile(op.join(out_dir, name))])
 
+            status = None
+            if min_fs < 652190352 or num_files < 125:
+                status = "FAILED"
+            else:
+                status = "PASSED"
+            f.write('***** {0} Experiment {1} : {2} {3}*****'.format(launch, ' '.join(exps[launch]),
+                                                                                      status, num_files))
+        tmp_file.close()
+    except Exception as e:
+        print(str(e))
 
 
 count = 0 
@@ -83,17 +82,23 @@ while count < iterations :
     shuffle(experiments)
     for exps in experiments:
         print(exps['batch'])
-        print(exps['pilot'])
+        print(exps['8pilot'])
+        print(exps['16pilot'])
         f_batch = TemporaryFile(prefix='batch', suffix=exps['cond'])
-        f_pilot = TemporaryFile(prefix='pilot', suffix=exps['cond'])
+        f_8pilot = TemporaryFile(prefix='pilot8', suffix=exps['cond'])
+        f_16pilot = TemporaryFile(prefix='pilot16', suffix=exps['cond'])
         x = Popen(exps['batch'], stdout=f_batch, stderr=f_batch)
-        y = Popen(exps['pilot'], stdout=f_pilot, stderr=f_pilot)
+        y = Popen(exps['8pilot'], stdout=f_8pilot, stderr=f_8pilot)
+        z = Popen(exps['16pilot'], stdout=f_16pilot, stderr=f_16pilot)
+
+        get_results(x, f_batch, "batch", exps['cond'], batch_out)
+        get_results(y, f_8pilot, "8pilot", exps['cond'], pilot8_out)
+        get_results(z, f_16pilot, "16pilot", exps['cond'], pilot16_out)
 
         try:
-            get_results(x, f_batch, "batch", exps['cond'], batch_out)
-            get_results(y, f_pilot, "pilot", exps['cond'], pilot_out)
-            shutil.rmtree(batch_out)
-            shutil.rmtree(pilot_out)
+            shutil.rmtree(batch_out, ignore_errors=True)
+            shutil.rmtree(pilot8_out, ignore_errors=True)
+            shutil.rmtree(pilot16_out, ignore_errors=True)
 
         except Exception as e:
             print(str(e))
