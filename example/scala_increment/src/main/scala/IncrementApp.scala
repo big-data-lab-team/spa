@@ -24,7 +24,7 @@ object IncrementApp {
     niftibytes.close()
     val t1 = System.nanoTime()
 
-    println("Elapsed load time: " + (t1 - t0).toDouble * pow(10, 9) + "s")
+    println("Elapsed load time: " + (t1 - t0).toDouble / pow(10, 9) + "s")
     return (new File(filename).getName(), volume)
   }
 
@@ -42,10 +42,14 @@ object IncrementApp {
       }
     }
     val t1 = System.nanoTime()
-    Thread.sleep((sleep - ((t1 - t0).toDouble / pow(10, 9))).toLong * 1000)
+    if ( sleep > 0 ){
+      val inc_duration = (t1 - t0).toDouble / pow(10, 9)
+      println("Incrementation duration: " + inc_duration + "s" )
+      Thread.sleep((sleep - inc_duration).toLong * 1000)
+    }
 
     val t2 = System.nanoTime()
-    println("Elapsed inc time: " + (t2 - t0).toDouble * pow(10, 9) + "s")
+    println("Elapsed inc time: " + (t2 - t0).toDouble / pow(10, 9) + "s")
     return (filename, volume )
   }
 
@@ -55,7 +59,7 @@ object IncrementApp {
     val t0 = System.nanoTime()
     volume.write(fn)
     val t1 = System.nanoTime()
-    println("Elapsed write time: " + (t1 - t0).toDouble * pow(10, 9) + "s")
+    println("Elapsed write time: " + (t1 - t0).toDouble / pow(10, 9) + "s")
 
     return (fn, "SUCCESS")
   }
