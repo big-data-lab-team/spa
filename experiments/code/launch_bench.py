@@ -3,14 +3,14 @@
 from subprocess import Popen, PIPE
 from os import path as op, linesep, getcwd, listdir
 from random import shuffle
-from tempfile import TemporaryFile
+from tempfile import TemporaryFile, NamedTemporaryFile
 import time
 import shutil
 
 
-iterations = 5
+iterations = 1
 num_chunks = 125
-project_dir = "/home/vhayots/project/vhayots/spa-temp/"
+project_dir = "/home/vhayots/projects/def-glatard/vhayots/spa/"
 template_dir = op.join(project_dir, "example/standalone/hpc/")
 cond_dir = op.join(project_dir, "experiments/code/conditions")
 application = op.join(project_dir, "pilotspark.py")
@@ -84,9 +84,9 @@ while count < iterations :
         print(exps['batch'])
         print(exps['8pilot'])
         print(exps['16pilot'])
-        f_batch = TemporaryFile(prefix='batch', suffix=exps['cond'])
-        f_8pilot = TemporaryFile(prefix='pilot8', suffix=exps['cond'])
-        f_16pilot = TemporaryFile(prefix='pilot16', suffix=exps['cond'])
+        f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
+        f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
+        f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
         x = Popen(exps['batch'], stdout=f_batch, stderr=f_batch)
         y = Popen(exps['8pilot'], stdout=f_8pilot, stderr=f_8pilot)
         z = Popen(exps['16pilot'], stdout=f_16pilot, stderr=f_16pilot)
