@@ -12,7 +12,7 @@ import scala.math.pow
 
 object IncrementApp {
   val usage = """
-    Usage: increment bb_dir output_dir iterations [--delay] [--work_dir]
+    Usage: increment app_name bb_dir output_dir iterations [--delay] [--work_dir]
   """
 
   def readImg( filename:String, data:PortableDataStream )
@@ -65,7 +65,7 @@ object IncrementApp {
   }
 
   def main(args: Array[String]) {
-    if (args.length == 0 || args.length < 3) { 
+    if (args.length == 0 || args.length < 4) { 
       println(usage)
       sys.exit(1)
     }
@@ -80,10 +80,12 @@ object IncrementApp {
         case "--delay" :: value :: tail =>
                                 nextArgument(map ++ Map('delay -> value.toInt), tail)
         case string :: tail if arglist.size - tail.size == 1  =>
+                                nextArgument(map ++ Map('app_name -> string), tail)
+        case string :: tail if arglist.size - tail.size == 2  =>
                                 nextArgument(map ++ Map('bb_dir -> string), tail)
-        case string :: tail if arglist.size - tail.size == 2 =>
-                                nextArgument(map ++ Map('output_dir -> string), tail)
         case string :: tail if arglist.size - tail.size == 3 =>
+                                nextArgument(map ++ Map('output_dir -> string), tail)
+        case string :: tail if arglist.size - tail.size == 4 =>
                                 nextArgument(map ++ Map('iterations -> string.toInt), tail)
         case option :: tail => println("Unknown option "+option)
                                sys.exit(1)
@@ -91,7 +93,7 @@ object IncrementApp {
     }
     val options = nextArgument(Map(), arglist)
     
-    val conf = new SparkConf().setAppName("Scala incrementation")
+    val conf = new SparkConf().setAppName(options('app_name).asInstanceOf[String])
     val sc = new SparkContext(conf)
 
     val delay = if ((options get 'delay).isEmpty) 0 else (options get 'delay).get
