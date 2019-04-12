@@ -57,7 +57,7 @@ def get_results(sp, tmp_file, launch, cond, out_dir):
         out_log = op.join(getcwd(), 'lb_{0}_{1}.out'.format(launch, 'cond'))
         print("Appending to logfile", out_log)
         with open(out_log, 'a+') as f:
-            f.write(str(tmp_file.read(), 'utf-8'))
+            f.write(tmp_file.read())
 
             num_files = 0
             min_fs = 0
@@ -76,6 +76,7 @@ def get_results(sp, tmp_file, launch, cond, out_dir):
     except Exception as e:
         print(str(e))
 
+    print("Completed obtaining results")
 
 count = 0 
 while count < iterations :
@@ -84,12 +85,12 @@ while count < iterations :
         print(exps['batch'])
         print(exps['8pilot'])
         print(exps['16pilot'])
-        f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
-        f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
-        f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']), dir=getcwd(), delete=False)
-        x = Popen(exps['batch'], stdout=f_batch, stderr=f_batch)
-        y = Popen(exps['8pilot'], stdout=f_8pilot, stderr=f_8pilot)
-        z = Popen(exps['16pilot'], stdout=f_16pilot, stderr=f_16pilot)
+        f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']))
+        f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']))
+        f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']))
+        x = Popen(exps['batch'], bufsize=1, stdout=f_batch, stderr=f_batch)
+        y = Popen(exps['8pilot'], bufsize=1, stdout=f_8pilot, stderr=f_8pilot)
+        z = Popen(exps['16pilot'], bufsize=1, stdout=f_16pilot, stderr=f_16pilot)
 
         get_results(x, f_batch, "batch", exps['cond'], batch_out)
         get_results(y, f_8pilot, "8pilot", exps['cond'], pilot8_out)

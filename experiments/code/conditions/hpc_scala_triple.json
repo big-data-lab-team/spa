@@ -7,11 +7,11 @@
         "time": "00:10:00",
         "nodes": 3,
         "mem": "112G",
-        "cpus-per-task": 16,
-        "ntasks-per-node": 1
+        "cpus-per-task": 1,
+        "ntasks-per-node": 16
     },
     "DRIVER": {
         "modules": ["spark/2.3.0"],
-        "program": "'--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar /scratch/vhayots/splits /scratch/vhayots/spa/scalaout_batch 1'"
+        "program": "'--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar batch3d-scalainc /scratch/vhayots/splits /scratch/vhayots/spa/scalaout_batch 1'"
     }
 }
