@@ -22,7 +22,6 @@ from datetime import datetime
 from slurmpy import Slurm
 from subprocess import Popen, PIPE
 from multiprocessing import cpu_count
-import logging
 import argparse
 import time
 import json
@@ -47,7 +46,16 @@ def write_bench_result(bench, result):
     with open(bench, 'a+') as f:
         f.write(',{}'.format(result))
 
+def job_status(filename):
+    with open(filename, 'r') as df:
+        errors = [(i,l) for i,l in enumerate(df) if 'ERROR' in l]
 
+    if len(errors) > 0:
+        logging.error('Program errored at lines:\n %s', '\n'.join(errors))
+        result = 'ERRORED'
+    else:
+        result = 'FINISHED'
+    return result
 
 
 def start_workers(s, num_nodes, compute_conf, template, rand_hash,
@@ -127,8 +135,10 @@ def configure(conf, job_id, rand_hash):
 
 
 def submit_sbatch(template, conf):
+    logging.warning(hist_fn)
 
-    hist_fn = op.abspath('batch_hist.out')
+    logging.info('Starting batch submission')
+
     if "benchmark" in conf:
         write_bench_start(conf["benchmark"])
 
@@ -138,34 +148,44 @@ def submit_sbatch(template, conf):
     program_start = configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     conf["DRIVER"]["mstr_bench"] = conf["COMPUTE"]["mstr_bench"]
+    logging.info('Command to be executed: %s', conf["DRIVER"]["program"])
     job_id = s.run(template, cmd_kwargs=conf["DRIVER"], _cmd=submit_func)
 
     job_id = str(job_id)
+
+    logging.info('Batch job ID: %s', job_id)
     condition = True
     time.sleep(5)
-
-    with open(hist_fn, 'a+') as f:
-        f.write(program_start)
-        f.write(conf["DRIVER"]["program"])
-        f.write(job_id)
-        f.write(os.linesep)
 
     while condition:
         p = Popen(["squeue", "-j", job_id], stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
         out = str(out, 'utf-8')
 
-        print("Squeue output: ", out)
+        logging.debug("Squeue output: %s", out)
 
         out = out.split(os.linesep)
         out.pop(0)
-        queue = [l.split(' ')[0] for l in out if l.split(' ') != '']
+        queue = [l.strip().split(' ')[0] for l in out if l.strip().split(' ') != '']
 
         condition = job_id in queue
-        time.sleep(5 * 60)
+        if condition:
+            logging.info('Job still running, sleeping for 5 mins')
+            time.sleep(5 * 60)
+
+    logging.info('Batch Job terminated')
+    result = 'UNKNOWN'
+    logfile = [op.join(d,f) for d,s,f in os.walk(op.abspath('logs')) if "{}.err".format(job_id) in f]
+
+    if len(logfile) > 0:
+        logging.info('Driver logfile: %s', logfile[0])
+        result = job_status(logfile)
+    else:
+        logging.warning('No logfile generated.')
 
     if "benchmark" in conf:
         write_bench_end(conf["benchmark"])
+        write_bench_result(conf["benchmark"], result)
 
 
 def submit_locally(template, conf):
@@ -280,7 +300,7 @@ def submit_pilots(template, conf):
         try:
             r = requests.get(driver_rest)
             driver_api = r.json()
-            logging.debug(driver_api)
+            logging.debug("Driver status: %s", driver_api)
             driver_id = driver_api["submissionId"]
         except Exception as e:
             logging.error(str(e))
@@ -313,7 +333,6 @@ def submit_pilots(template, conf):
                 continue
         
             running_jobs = out.split(os.linesep)[1:]
-            #logging.info('Currently running jobs: %s', " ,".join(running_jobs))
             running_jobs = [l.strip().split(' ')[0] for l in running_jobs if l.strip().split(' ')[0] != '']
 
             logging.info('Currently running jobs: %s', " ,".join(running_jobs))
@@ -352,25 +371,16 @@ def submit_pilots(template, conf):
             logging.debug('stderr: %s', str(err, 'utf-8'))
 
     if "benchmark" in conf:
-        if result != 'FINISHED':
+        if result != 'FINISHED' and driver_id is not None:
             logging.debug('Driver ID: %s', driver_id)
-            driver_log = [f for d,s,f in os.walk(spark_log) if s == driver_id]
-            #driver_log = glob.iglob(op.join(spark_log, '**', driver_id))
+            driver_log = [op.join(d, f[0]) for d,s,f in os.walk(spark_log) if driver_id in d]
+            driver_err_log = [i for i in driver_log if 'stderr' in i]
 
-            driver_log = list(driver_log)
-            logging.debug('Driver logfiles: %s', '\n'.join(driver_log))
+            logging.debug('Driver logfile: %s', driver_err_log)
             
-            if len(driver_log) > 0:
+            if len(driver_err_log) > 0:
 
-                errors = None
-                with open(driver_log, 'r') as df:
-                    errors = [(i,l) for i,l in enumerate(df) in 'ERROR' in l]
-
-                if len(errors) > 0:
-                    logging.error('Program errored at lines:\n %s', '\n'.join(errors))
-                    results = 'ERRORED'
-                else:
-                    results = 'FINISHED'
+                result = job_status(driver_err_log[0])
 
         write_bench_end(conf["benchmark"])
         write_bench_result(conf["benchmark"], result)
