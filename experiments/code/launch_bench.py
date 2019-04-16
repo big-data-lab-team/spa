@@ -14,17 +14,17 @@ project_dir = "/home/vhayots/projects/def-glatard/vhayots/spa/"
 template_dir = op.join(project_dir, "example/standalone/hpc/")
 cond_dir = op.join(project_dir, "experiments/code/conditions")
 application = op.join(project_dir, "pilotspark.py")
-hpc_batch_template_multin = op.join(template_dir, "hpc_batch_template.sh")
+hpc_batch_template = op.join(template_dir, "hpc_batch_template.sh")
 hpc_pilot_template = op.join(template_dir, "hpc_pilot_template.sh")
 batch_out = '/scratch/vhayots/spa/scalaout_batch'
 pilot8_out = '/scratch/vhayots/spa/scalaout_8pilots'
 pilot16_out = '/scratch/vhayots/spa/scalaout_16pilots'
 
-batch_single = [application, op.join(template_dir, "hpc_batch_singlenode.sh"),
+batch_single = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_single.json"), "-B"]
-batch_double = [application, hpc_batch_template_multin,
+batch_double = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_double.json"), "-B"]
-batch_triple = [application, hpc_batch_template_multin,
+batch_triple = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_triple.json"), "-B"]
 
 experiments = [
