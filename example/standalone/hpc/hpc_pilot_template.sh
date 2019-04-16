@@ -61,7 +61,7 @@ pilot_program(){
 	echo 'Master UI port: ' $MASTER_UI_PORT
 	echo 'REST server port: ' $REST_SERVER_PORT
 
-	WORKER_OUT=$($SPARK_HOME/sbin/start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} $MASTER_URI 2>&1)
+	WORKER_OUT=$(SPARK_WORKER_INSTANCES=${SLURM_NPROCS} $SPARK_HOME/sbin/start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} $MASTER_URI 2>&1)
 	while [[ -z "$WORKER_UI" ]]
 	do
     		echo "worker starting..."

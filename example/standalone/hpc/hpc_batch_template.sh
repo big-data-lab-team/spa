@@ -8,13 +8,14 @@ module load spark/2.3.0
 export SPARK_IDENT_STRING=$SLURM_JOBID
 export SPARK_WORKER_DIR=sworker_logs
 #$SLURM_TMPDIR
-export SLURM_MEM_PER_TASK=$(echo "${SLURM_MEM_PER_NODE} / ${SLURM_NPROCS}" | bc)
+SLURM_MEM_PER_PROC=$(echo "${SLURM_NPROCS} / ${SLURM_NNODES}" | bc)
+export SLURM_MEM_PER_TASK=$(echo "${SLURM_MEM_PER_NODE} / ${SLURM_MEM_PER_PROC}" | bc)
 export SLURM_SPARK_MEM_FLOAT=$(echo "${SLURM_MEM_PER_TASK} * 0.95" | bc)
 export SLURM_SPARK_MEM=${SLURM_SPARK_MEM_FLOAT%.*}
-echo ${SLURM_MEM_PER_TASK} ${SLURM_SPARK_MEM}
 
 term_handler()
 {
+    kill $slaves_pid
     stop-master.sh
     echo end $(date +%s.%N) >> $mstr_bench
 
@@ -32,14 +33,23 @@ batch_program()
 	    sleep 5
     done
 
-    NWORKERS=$((SLURM_NTASKS - 1))
+    NWORKERS_TOTAL=$((SLURM_NTASKS))
+    NWORKERS=$(echo "${NWORKERS_TOTAL} / ${SLURM_NNODES}" | bc)
+    NWORKERS=${NWORKERS%.*}
 
-    SPARK_NO_DAEMONIZE=1 srun -n ${NWORKERS} -N ${NWORKERS} --label --output=$SPARK_LOG_DIR/spark-%j-workers.out start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} ${MASTER_URL} &
+    echo 'Number of workers per node' $NWORKERS
+    echo 'Number of nodes' $SLURM_NNODES
+    echo 'Memory per task' $SLURM_SPARK_MEM
+
+    NNODES_REMOTE=$((SLURM_NNODES - 1))
+
+    SPARK_WORKER_INSTANCES=${NWORKERS} SPARK_NO_DAEMONIZE=1 srun -n ${NWORKERS_TOTAL} -N $SLURM_NNODES --label --output=$SPARK_LOG_DIR/spark-%j-workers.out start-slave.sh -m ${SLURM_SPARK_MEM}M -c ${SLURM_CPUS_PER_TASK} ${MASTER_URL} &
+
     slaves_pid=$!
 
     if [ ! -z "$program" ]
     then 
-        srun -n 1 -N 1 spark-submit --master ${MASTER_URL} --executor-memory ${SLURM_SPARK_MEM}M $program
+        spark-submit --master ${MASTER_URL} --executor-memory ${SLURM_SPARK_MEM}M $program
     fi
 
     kill $slaves_pid

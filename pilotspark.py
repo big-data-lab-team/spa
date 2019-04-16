@@ -48,7 +48,7 @@ def write_bench_result(bench, result):
 
 def job_status(filename):
     with open(filename, 'r') as df:
-        errors = [(i,l) for i,l in enumerate(df) if 'ERROR' in l]
+        errors = ["{0} {1}".format(i,l) for i,l in enumerate(df) if 'ERROR' in l]
 
     if len(errors) > 0:
         logging.error('Program errored at lines:\n %s', '\n'.join(errors))
@@ -175,11 +175,11 @@ def submit_sbatch(template, conf):
 
     logging.info('Batch Job terminated')
     result = 'UNKNOWN'
-    logfile = [op.join(d,f) for d,s,f in os.walk(op.abspath('logs')) if "{}.err".format(job_id) in f]
+    logfile = [op.join(d,f) for d,s,lf in os.walk(op.abspath('logs')) for f in lf if '{}.err'.format(job_id) in f]
 
     if len(logfile) > 0:
         logging.info('Driver logfile: %s', logfile[0])
-        result = job_status(logfile)
+        result = job_status(logfile[0])
     else:
         logging.warning('No logfile generated.')
 
