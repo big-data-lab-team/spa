@@ -1,7 +1,7 @@
 {
     "name": "batch1d bb inc",
     "logdir": "/scratch/vhayots/spa/logs",
-    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa-temp/batch_1dedicated.out",
+    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa/batch_1dedicated.out",
     "SLURM_CONF_GLOBAL": {
 	"account": "def-glatard",
         "time": "02:30:00",
@@ -12,6 +12,6 @@
     },
     "DRIVER": {
         "modules": ["spark/2.3.0"],
-        "program": "'--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa-temp/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar batch1d-bb-inc /scratch/vhayots/splits /scratch/vhayots/spa/scalaout_batch 10 --delay 45'"
+        "program": "'--jars /home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar /home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar batch1d-bb-inc /scratch/vhayots/splits /scratch/vhayots/spa/scalaout_batch 10 --delay 45'"
     }
 }

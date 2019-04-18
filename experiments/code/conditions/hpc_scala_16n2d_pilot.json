@@ -1,7 +1,7 @@
 {
     "name": "16p2d bb inc",
     "logdir": "/scratch/vhayots/spa/logs",
-    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa-temp/16nodes_2dedicated.out",
+    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa/16nodes_2dedicated.out",
     "num_nodes": 16,
     "SLURM_CONF_GLOBAL": {
 	"account": "def-glatard",
@@ -9,7 +9,7 @@
         "nodes": 1,
         "mem": "14G",
         "cpus-per-task": 1,
-        "ntasks-per-node": 1
+        "ntasks-per-node": 2
     },
     "DRIVER": {
         "modules": ["spark/2.3.0"],

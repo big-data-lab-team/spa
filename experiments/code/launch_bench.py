@@ -8,7 +8,7 @@ import time
 import shutil
 
 
-iterations = 1
+iterations = 5
 num_chunks = 125
 project_dir = "/home/vhayots/projects/def-glatard/vhayots/spa/"
 template_dir = op.join(project_dir, "example/standalone/hpc/")
