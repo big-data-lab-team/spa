@@ -45,7 +45,9 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 sj_elem['id'] = sj
                 sj_elem['start_time'] = None
                 sj_elem['end_time'] = None
-                sj_elem['succeeded'] = get_jobid_success(sj, s_logs)
+                nodes, success = get_jobid_success(sj, s_logs)
+                sj_elem['nodes'] = list(nodes)
+                sj_elem['succeeded'] = success
                 sjelems.append(sj_elem)
 
                 bench_dir = glob.glob(op.join(sj_benchmark_dir, '*benchmarks.{}.out'.format(sj)))
@@ -161,6 +163,7 @@ def get_jobid_success(job_id, master_logs):
    
     logfile = glob.glob(op.join(op.abspath(master_logs), '*.{}.out'.format(job_id)))
     batch = False
+    executors = []
 
     if len(logfile) > 0:
         if 'batch' in logfile[0]:
@@ -169,12 +172,16 @@ def get_jobid_success(job_id, master_logs):
 
         with open(logfile[0], 'r') as f:
             for line in f:
-                if '"finishedexecutors"' in line:
+                if not batch and 'NODE: ' in line:
+                    executors.append(line.split(' ')[-1].strip('\n'))
+                elif '"finishedexecutors"' in line:
                     if '"finishedexecutors" : [ ]' not in line:
-                        return True
+                        return set(executors), True
+                elif batch and 'Executor added' in line:
+                    executors.append(line.split(' ')[-4].split(':')[0].strip('('))
                 elif batch and 'Finished task' in line and '125/125' in line:
-                    return True
-    return False
+                    return set(executors), True
+    return set(executors), False
 
 
 def main():
