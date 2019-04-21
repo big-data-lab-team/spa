@@ -45,7 +45,7 @@ object IncrementApp {
     if ( sleep > 0 ){
       val inc_duration = (t1 - t0).toDouble / pow(10, 9)
       println("Incrementation duration: " + inc_duration + "s" )
-      Thread.sleep((sleep - inc_duration).toLong * 1000)
+      Thread.sleep(sleep * 1000)
     }
 
     val t2 = System.nanoTime()
