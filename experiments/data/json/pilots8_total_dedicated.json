@@ -443,7 +443,7 @@
       "timestamp": "2019-04-16T07:19:07.860681",
       "start_time": 1555413547.8606932,
       "end_time": 1555414541.5507686,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 172157,
@@ -452,7 +452,7 @@
             "nodes": [
                "10.70.58.38"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172160,
@@ -461,7 +461,7 @@
             "nodes": [
                "10.70.118.13"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172162,
@@ -470,7 +470,7 @@
             "nodes": [
                "10.70.118.17"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172164,
@@ -488,7 +488,7 @@
             "nodes": [
                "10.70.78.29"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172168,
@@ -497,7 +497,7 @@
             "nodes": [
                "10.70.78.29"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172170,
@@ -506,7 +506,7 @@
             "nodes": [
                "10.70.78.29"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172171,
@@ -515,7 +515,7 @@
             "nodes": [
                "10.70.78.30"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -974,7 +974,7 @@
             "nodes": [
                "10.70.58.26"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 176656,
@@ -1091,7 +1091,7 @@
       "timestamp": "2019-04-18T01:14:03.429003",
       "start_time": 1555564443.4290159,
       "end_time": 1555565437.1823204,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 206604,
@@ -1109,7 +1109,7 @@
             "nodes": [
                "10.70.78.20"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206608,
@@ -1118,7 +1118,7 @@
             "nodes": [
                "10.70.78.20"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206610,
@@ -1127,7 +1127,7 @@
             "nodes": [
                "10.70.58.24"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206612,
@@ -1136,7 +1136,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206614,
@@ -1145,7 +1145,7 @@
             "nodes": [
                "10.70.118.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206615,
@@ -1154,7 +1154,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206617,
@@ -1163,7 +1163,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -1235,7 +1235,7 @@
             "nodes": [
                "10.70.115.13"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 206805,
@@ -1244,7 +1244,7 @@
             "nodes": [
                "10.70.115.13"
             ],
-            "succeeded": false
+            "succeeded": true
          }
       ]
    },
@@ -1613,7 +1613,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 207845,
@@ -2207,7 +2207,7 @@
             "nodes": [
                "10.70.38.53"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 212525,

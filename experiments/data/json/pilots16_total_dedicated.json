@@ -181,7 +181,7 @@
       "timestamp": "2019-04-16T00:26:50.241039",
       "start_time": 1555388810.2410498,
       "end_time": 1555389530.995696,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 166307,
@@ -190,7 +190,7 @@
             "nodes": [
                "10.70.59.25"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166310,
@@ -199,7 +199,7 @@
             "nodes": [
                "10.70.58.26"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166312,
@@ -208,7 +208,7 @@
             "nodes": [
                "10.70.58.27"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166314,
@@ -226,7 +226,7 @@
             "nodes": [
                "10.70.98.30"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166318,
@@ -235,7 +235,7 @@
             "nodes": [
                "10.70.98.37"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166320,
@@ -244,7 +244,7 @@
             "nodes": [
                "10.70.98.41"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166322,
@@ -253,7 +253,7 @@
             "nodes": [
                "10.70.118.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166324,
@@ -262,7 +262,7 @@
             "nodes": [
                "10.70.118.39"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166325,
@@ -271,7 +271,7 @@
             "nodes": [
                "10.70.118.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166326,
@@ -280,7 +280,7 @@
             "nodes": [
                "10.70.118.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166327,
@@ -289,7 +289,7 @@
             "nodes": [
                "10.70.98.13"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166328,
@@ -298,7 +298,7 @@
             "nodes": [
                "10.70.98.13"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166329,
@@ -307,7 +307,7 @@
             "nodes": [
                "10.70.98.19"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166330,
@@ -316,7 +316,7 @@
             "nodes": [
                "10.70.98.19"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 166331,
@@ -325,7 +325,7 @@
             "nodes": [
                "10.70.118.12"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -496,7 +496,7 @@
             "nodes": [
                "10.70.78.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169525,
@@ -577,7 +577,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169541,
@@ -586,7 +586,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169542,
@@ -595,7 +595,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169543,
@@ -604,7 +604,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169544,
@@ -622,7 +622,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 169546,
@@ -631,7 +631,7 @@
             "nodes": [
                "10.70.17.10"
             ],
-            "succeeded": false
+            "succeeded": true
          }
       ]
    },
@@ -739,7 +739,7 @@
             "nodes": [
                "10.70.118.35"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 171330,
@@ -793,7 +793,7 @@
       "timestamp": "2019-04-16T07:19:07.858692",
       "start_time": 1555413547.8587031,
       "end_time": 1555414550.8145509,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 172156,
@@ -802,7 +802,7 @@
             "nodes": [
                "10.70.78.29"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172159,
@@ -811,7 +811,7 @@
             "nodes": [
                "10.70.78.29"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172161,
@@ -820,7 +820,7 @@
             "nodes": [
                "10.70.98.14"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172163,
@@ -829,7 +829,7 @@
             "nodes": [
                "10.70.98.17"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172165,
@@ -838,7 +838,7 @@
             "nodes": [
                "10.70.78.30"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172167,
@@ -847,7 +847,7 @@
             "nodes": [
                "10.70.78.30"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172169,
@@ -856,7 +856,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172172,
@@ -865,7 +865,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172173,
@@ -874,7 +874,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172174,
@@ -901,7 +901,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172177,
@@ -910,7 +910,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172178,
@@ -919,7 +919,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172179,
@@ -928,7 +928,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172180,
@@ -946,7 +946,7 @@
       "timestamp": "2019-04-16T07:35:52.116469",
       "start_time": 1555414552.1164808,
       "end_time": 1555415660.5517967,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 172291,
@@ -964,7 +964,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172296,
@@ -1000,7 +1000,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172304,
@@ -1009,7 +1009,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172306,
@@ -1054,7 +1054,7 @@
             "nodes": [
                "10.70.78.47"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172311,
@@ -1063,7 +1063,7 @@
             "nodes": [
                "10.70.78.47"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172312,
@@ -1072,7 +1072,7 @@
             "nodes": [
                "10.70.78.47"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172313,
@@ -1081,7 +1081,7 @@
             "nodes": [
                "10.70.78.47"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 172314,
@@ -1090,7 +1090,7 @@
             "nodes": [
                "10.70.78.47"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -1117,7 +1117,7 @@
             "nodes": [
                "10.70.78.10"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 172523,
@@ -1558,7 +1558,7 @@
       "timestamp": "2019-04-16T11:30:29.007264",
       "start_time": 1555428629.0072768,
       "end_time": 1555429632.9921644,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 175955,
@@ -1567,7 +1567,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175957,
@@ -1576,7 +1576,7 @@
             "nodes": [
                "10.70.59.25"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175959,
@@ -1585,7 +1585,7 @@
             "nodes": [
                "10.70.78.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175961,
@@ -1594,7 +1594,7 @@
             "nodes": [
                "10.70.78.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175965,
@@ -1603,7 +1603,7 @@
             "nodes": [
                "10.70.78.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175967,
@@ -1612,7 +1612,7 @@
             "nodes": [
                "10.70.78.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175969,
@@ -1621,7 +1621,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175971,
@@ -1630,7 +1630,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175972,
@@ -1639,7 +1639,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175973,
@@ -1648,7 +1648,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175975,
@@ -1657,7 +1657,7 @@
             "nodes": [
                "10.70.78.35"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175976,
@@ -1666,7 +1666,7 @@
             "nodes": [
                "10.70.78.43"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175977,
@@ -1675,7 +1675,7 @@
             "nodes": [
                "10.70.78.43"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175978,
@@ -1684,7 +1684,7 @@
             "nodes": [
                "10.70.78.43"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 175979,
@@ -1702,7 +1702,7 @@
             "nodes": [
                "10.70.78.43"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -1720,7 +1720,7 @@
             "nodes": [
                "10.70.59.25"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 176647,
@@ -2017,7 +2017,7 @@
       "timestamp": "2019-04-18T01:14:03.408851",
       "start_time": 1555564443.4088655,
       "end_time": 1555565437.182227,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 206606,
@@ -2035,7 +2035,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206611,
@@ -2044,7 +2044,7 @@
             "nodes": [
                "10.70.118.32"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206613,
@@ -2053,7 +2053,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206616,
@@ -2062,7 +2062,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206618,
@@ -2071,7 +2071,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206619,
@@ -2080,7 +2080,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206620,
@@ -2089,7 +2089,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206621,
@@ -2098,7 +2098,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206622,
@@ -2107,7 +2107,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206623,
@@ -2116,7 +2116,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206624,
@@ -2125,7 +2125,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206625,
@@ -2134,7 +2134,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206626,
@@ -2143,7 +2143,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206627,
@@ -2152,7 +2152,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 206628,
@@ -2161,7 +2161,7 @@
             "nodes": [
                "10.70.78.15"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -2269,7 +2269,7 @@
             "nodes": [
                "10.70.154.21"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 206810,
@@ -2476,7 +2476,7 @@
       "timestamp": "2019-04-18T04:14:39.559681",
       "start_time": 1555575279.5596921,
       "end_time": 1555575980.2197638,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 207542,
@@ -2485,7 +2485,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207545,
@@ -2539,7 +2539,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207557,
@@ -2548,7 +2548,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207558,
@@ -2557,7 +2557,7 @@
             "nodes": [
                "10.70.59.23"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207559,
@@ -2566,7 +2566,7 @@
             "nodes": [
                "10.70.59.23"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207560,
@@ -2575,7 +2575,7 @@
             "nodes": [
                "10.70.59.23"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207561,
@@ -2584,7 +2584,7 @@
             "nodes": [
                "10.70.59.24"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207562,
@@ -2593,7 +2593,7 @@
             "nodes": [
                "10.70.59.24"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207563,
@@ -2602,7 +2602,7 @@
             "nodes": [
                "10.70.59.25"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207564,
@@ -2611,7 +2611,7 @@
             "nodes": [
                "10.70.58.15"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207565,
@@ -2620,7 +2620,7 @@
             "nodes": [
                "10.70.58.19"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -2782,7 +2782,7 @@
       "timestamp": "2019-04-18T05:33:19.231304",
       "start_time": 1555579999.231318,
       "end_time": 1555580997.4486787,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 207778,
@@ -2791,7 +2791,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207780,
@@ -2818,7 +2818,7 @@
             "nodes": [
                "10.70.78.52"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207787,
@@ -2845,7 +2845,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207793,
@@ -2854,7 +2854,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207794,
@@ -2863,7 +2863,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207796,
@@ -2872,7 +2872,7 @@
             "nodes": [
                "10.70.59.22"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207797,
@@ -2890,7 +2890,7 @@
             "nodes": [
                "10.70.59.25"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207799,
@@ -2899,7 +2899,7 @@
             "nodes": [
                "10.70.58.10"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207800,
@@ -2908,7 +2908,7 @@
             "nodes": [
                "10.70.58.14"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207801,
@@ -2917,7 +2917,7 @@
             "nodes": [
                "10.70.58.14"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 207802,
@@ -2926,7 +2926,7 @@
             "nodes": [
                "10.70.58.14"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -3214,7 +3214,7 @@
             "nodes": [
                "10.70.98.40"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 208063,
@@ -3394,7 +3394,7 @@
       "timestamp": "2019-04-18T09:41:07.944875",
       "start_time": 1555594867.9448855,
       "end_time": 1555596145.3658538,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 209125,
@@ -3403,7 +3403,7 @@
             "nodes": [
                "10.70.59.24"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209128,
@@ -3412,7 +3412,7 @@
             "nodes": [
                "10.70.14.10"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209130,
@@ -3421,7 +3421,7 @@
             "nodes": [
                "10.70.14.10"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209131,
@@ -3439,7 +3439,7 @@
             "nodes": [
                "10.70.14.10"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209136,
@@ -3448,7 +3448,7 @@
             "nodes": [
                "10.70.14.10"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209137,
@@ -3457,7 +3457,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209139,
@@ -3466,7 +3466,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209141,
@@ -3475,7 +3475,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209142,
@@ -3484,7 +3484,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209143,
@@ -3493,7 +3493,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209144,
@@ -3502,7 +3502,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209145,
@@ -3511,7 +3511,7 @@
             "nodes": [
                "10.70.14.12"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209146,
@@ -3520,7 +3520,7 @@
             "nodes": [
                "10.70.14.13"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209147,
@@ -3529,7 +3529,7 @@
             "nodes": [
                "10.70.14.13"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 209148,
@@ -3538,7 +3538,7 @@
             "nodes": [
                "10.70.14.13"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },
@@ -3709,7 +3709,7 @@
             "nodes": [
                "10.70.78.16"
             ],
-            "succeeded": false
+            "succeeded": true
          },
          {
             "id": 210514,
@@ -3853,7 +3853,7 @@
       "timestamp": "2019-04-18T12:27:17.985307",
       "start_time": 1555604837.9853232,
       "end_time": 1555606522.1319985,
-      "success": true,
+      "success": false,
       "sid": [
          {
             "id": 212391,
@@ -3871,7 +3871,7 @@
             "nodes": [
                "10.70.78.16"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212395,
@@ -3880,7 +3880,7 @@
             "nodes": [
                "10.70.78.16"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212398,
@@ -3889,7 +3889,7 @@
             "nodes": [
                "10.70.118.20"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212399,
@@ -3898,7 +3898,7 @@
             "nodes": [
                "10.70.59.23"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212402,
@@ -3907,7 +3907,7 @@
             "nodes": [
                "10.70.59.23"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212405,
@@ -3916,7 +3916,7 @@
             "nodes": [
                "10.70.58.36"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212407,
@@ -3925,7 +3925,7 @@
             "nodes": [
                "10.70.58.45"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212408,
@@ -3934,7 +3934,7 @@
             "nodes": [
                "10.70.78.49"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212409,
@@ -3943,7 +3943,7 @@
             "nodes": [
                "10.70.78.49"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212410,
@@ -3952,7 +3952,7 @@
             "nodes": [
                "10.70.78.51"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212411,
@@ -3961,7 +3961,7 @@
             "nodes": [
                "10.70.58.31"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212412,
@@ -3970,7 +3970,7 @@
             "nodes": [
                "10.70.118.28"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212413,
@@ -3979,7 +3979,7 @@
             "nodes": [
                "10.70.118.34"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212419,
@@ -3988,7 +3988,7 @@
             "nodes": [
                "10.70.118.34"
             ],
-            "succeeded": true
+            "succeeded": false
          },
          {
             "id": 212420,
@@ -3997,7 +3997,7 @@
             "nodes": [
                "10.70.118.38"
             ],
-            "succeeded": true
+            "succeeded": false
          }
       ]
    },

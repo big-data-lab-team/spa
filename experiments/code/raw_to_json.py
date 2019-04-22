@@ -32,13 +32,23 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
         print(f)
         with open(f, 'r') as logfile:
             sjids = []
-            success = []
             sjelems = []
+            log_status = False
+            worker_logdir = None
+            driver_id = None
+            driver_path = None
 
             for line in logfile:
                 if ('batch' not in exec_mode and 'Launched SLURM pilot' in line
                      or 'batch' in exec_mode and 'Batch job ID:' in line):
                     sjids.append(int(line.split(' ')[-1]))
+                elif 'Spark worker log directory' in line:
+                    worker_logdir = line.split(' ')[-1].strip(linesep)
+                elif "'submissionId': " in line:
+                    driver_id = line.split("'submissionId': ")[1].split(',')[0].strip("'")
+
+            if driver_id is not None:
+                driver_path = op.join(worker_logdir, driver_id)
 
             for sj in sjids:
                 sj_elem = {}
@@ -47,7 +57,7 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 sj_elem['end_time'] = None
                 nodes, success = get_jobid_success(sj, s_logs)
                 sj_elem['nodes'] = list(nodes)
-                sj_elem['succeeded'] = success
+                sj_elem['succeeded'] = success if success or driver_id is None else get_success(driver_path)
                 sjelems.append(sj_elem)
 
                 bench_dir = glob.glob(op.join(sj_benchmark_dir, '*benchmarks.{}.out'.format(sj)))
@@ -63,26 +73,17 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
             job_ids[count] = sjelems
             count += 1
 
-    '''with open(fn, 'r') as logfile:
-        sjids = []
-        success = []
-        sjelems = []
-        for line in logfile:
-            contents = line.split(' ')
-            if len(contents) > 0 and "b'Submitted" in line:
-                sjids.append(int(contents[-1][:-2]))
-                next_line = logfile.readline()
-                while 'submitted:' in next_line:
-                    contents = next_line.split(' ')
-                    sjids.append(int(contents[-1][:-2]))
-                    next_line = logfile.readline()
-
-
-            elif len(contents) > 0 and 'Socket timed out on send/recv operation' in line:
-                job_ids[count] = list()
-                count += 1'''
 
     return job_ids
+
+
+def get_success(fp):
+    if op.isdir(fp):
+        with open(op.join(fp, 'stderr'), 'r') as f:
+            for line in f:
+                if 'Finished task' in line and '125/125' in line:
+                    return True
+    return False
 
 
 def order_pilots(directory, sjids, exec_mode="batch"):
@@ -175,8 +176,7 @@ def get_jobid_success(job_id, master_logs):
                 if not batch and 'NODE: ' in line:
                     executors.append(line.split(' ')[-1].strip('\n'))
                 elif '"finishedexecutors"' in line:
-                    if '"finishedexecutors" : [ ]' not in line:
-                        return set(executors), True
+                    return set(executors), False
                 elif batch and 'Executor added' in line:
                     executors.append(line.split(' ')[-4].split(':')[0].strip('('))
                 elif batch and 'Finished task' in line and '125/125' in line:
