@@ -26,6 +26,8 @@ batch_double = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_double.json"), "-B"]
 batch_triple = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_triple.json"), "-B"]
+batch_quad = [application, hpc_batch_template,
+              op.join(cond_dir, "hpc_scala_quadruple.json"), "-B"]
 
 experiments = [
                 {
@@ -46,6 +48,12 @@ experiments = [
                     'batch' : batch_triple,
                     '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n3d_pilot.json")],
                     '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n3d_pilot.json")]
+                },
+                {
+                    'cond' : '4dedicated',
+                    'batch' : batch_quad,
+                    '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n4d_pilot.json")],
+                    '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n4d_pilot.json")]
                 }
               ]
 
