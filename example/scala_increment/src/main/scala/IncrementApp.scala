@@ -45,12 +45,12 @@ object IncrementApp {
 
   def readImg( filename:String, data:PortableDataStream, benchmark_dir:String )
     : Tuple2[String, NiftiVolume] = {
-    val t0 = System.nanoTime()
+    val t0 = System.currentTimeMillis()
     val niftibytes = data.open()
     println(filename)
     val volume = NiftiVolume.read(niftibytes, filename)
     niftibytes.close()
-    val t1 = System.nanoTime()
+    val t1 = System.currentTimeMillis()
 
     println("Elapsed load time: " + (t1 - t0).toDouble / pow(10, 9) + "s")
 
@@ -64,7 +64,7 @@ object IncrementApp {
     benchmark_dir:String )
     : Tuple2[String, NiftiVolume] = {
 
-    val t0 = System.nanoTime()
+    val t0 = System.currentTimeMillis()
     for( i <- 0 to volume.data.sizeX - 1) {
       for( j <- 0 to volume.data.sizeY - 1) {
         for( k <- 0 to volume.data.sizeZ - 1) {
@@ -74,17 +74,17 @@ object IncrementApp {
         }
       }
     }
-    val t1 = System.nanoTime()
+    val t1 = System.currentTimeMillis()
     if ( sleep > 0 ){
       val inc_duration = (t1 - t0).toDouble / pow(10, 9)
       println("Incrementation duration: " + inc_duration + "s" )
       Thread.sleep(sleep * 1000)
     }
 
-    val t2 = System.nanoTime()
+    val t2 = System.currentTimeMillis()
     println("Elapsed inc time: " + (t2 - t0).toDouble / pow(10, 9) + "s")
 
-    benchmark( "increment", t0, t1, benchmark_dir )
+    benchmark( "increment", t0, t2, benchmark_dir )
 
     return (filename, volume )
   }
@@ -92,9 +92,9 @@ object IncrementApp {
   def saveData( fn: String, volume: NiftiVolume, benchmark_dir: String )
     : Tuple2[String, String] = {
 
-    val t0 = System.nanoTime()
+    val t0 = System.currentTimeMillis()
     volume.write(fn)
-    val t1 = System.nanoTime()
+    val t1 = System.currentTimeMillis()
     println("Elapsed write time: " + (t1 - t0).toDouble / pow(10, 9) + "s")
 
     benchmark( "write", t0, t1, benchmark_dir )
@@ -108,7 +108,7 @@ object IncrementApp {
       sys.exit(1)
     }
 
-    val t0 = System.nanoTime()
+    val t0 = System.currentTimeMillis()
 
     val arglist = args.toList
     type OptionMap = Map[Symbol, Any]
@@ -157,7 +157,7 @@ object IncrementApp {
     val result = imRDD.map( x => saveData(new File(output_dir, x._1).getAbsolutePath(), x._2, ld) ).collect()
 
     result.foreach(x => println(x._1 + ": " + x._2))                              
-    val t1 = System.nanoTime()
+    val t1 = System.currentTimeMillis()
     benchmark("driver", t0, t1, ld )
 
     sc.stop()
