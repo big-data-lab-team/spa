@@ -167,7 +167,15 @@ def order_pilots(directory, sjids, exec_mode="batch"):
 
     print(len(total_order))
     for idx, elem in enumerate(total_order):
-        elem['worker_count'] = sum([len(el[1]) for sj in sjids[idx] for el in sj['nodes'].items()])
+        
+        node_workers = {}
+        
+        for sj in sjids[idx]:
+            for k,v in sj['nodes'].items():
+                if k not in node_workers:
+                    node_workers[k] = v
+
+        elem['worker_count'] = sum([len(el[1]) for el in node_workers.items()])
         elem['sid'] = sjids[idx]
         
 
