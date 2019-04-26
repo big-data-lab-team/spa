@@ -55,9 +55,17 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 sj_elem['id'] = sj
                 sj_elem['start_time'] = None
                 sj_elem['end_time'] = None
-                nodes, success = get_jobid_success(sj, s_logs)
+                nodes, success, worker_count = get_jobid_success(sj, s_logs)
                 sj_elem['nodes'] = list(nodes)
-                sj_elem['succeeded'] = success if success or driver_id is None else get_success(driver_path)
+
+                if success or driver_id is None:
+                    sj_elem['worker_count'] = worker_count
+                    sj_elem['succeeded'] = success
+                else:
+                    success, worker_count = get_success(driver_path)
+                    sj_elem['worker_count'] = worker_count
+                    sj_elem['succeeded'] = success
+
                 sjelems.append(sj_elem)
 
                 bench_dir = glob.glob(op.join(sj_benchmark_dir, '*benchmarks.{}.out'.format(sj)))
@@ -78,12 +86,16 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
 
 
 def get_success(fp):
+    success = False
+    worker_count = 0
     if op.isdir(fp):
         with open(op.join(fp, 'stderr'), 'r') as f:
             for line in f:
-                if 'Finished task' in line and '125/125' in line:
-                    return True
-    return False
+                if 'Executor added' in line:
+                    worker_count += 1
+                elif 'Finished task' in line and '125/125' in line:
+                    success = True
+    return success, worker_count
 
 
 def order_pilots(directory, sjids, exec_mode="batch"):
@@ -119,8 +131,10 @@ def order_pilots(directory, sjids, exec_mode="batch"):
                 dedicated = 'single'
             elif dedicated == 2:
                 dedicated = 'double'
-            else:
+            elif dedicated == 3:
                 dedicated = 'triple'
+            else:
+                dedicated = 'quadruple'
         
         abs_fn = op.abspath(op.join(directory, fn))
 
@@ -153,7 +167,12 @@ def order_pilots(directory, sjids, exec_mode="batch"):
 
     print(len(total_order))
     for idx, elem in enumerate(total_order):
+        elem['worker_count'] = sjids[idx][0]['worker_count'] if len(sjids) > 0 else 0
         elem['sid'] = sjids[idx]
+        
+        for sj in sjids[idx]:
+            sj.pop('worker_count')
+
         elem['success'] = True in [sj['succeeded'] for sj in sjids[idx]]
 
 
@@ -165,6 +184,7 @@ def get_jobid_success(job_id, master_logs):
     logfile = glob.glob(op.join(op.abspath(master_logs), '*.{}.out'.format(job_id)))
     batch = False
     executors = []
+    worker_count = 0
 
     if len(logfile) > 0:
         if 'batch' in logfile[0]:
@@ -176,12 +196,13 @@ def get_jobid_success(job_id, master_logs):
                 if not batch and 'NODE: ' in line:
                     executors.append(line.split(' ')[-1].strip('\n'))
                 elif '"finishedexecutors"' in line:
-                    return set(executors), False
+                    return set(executors), False, worker_count
                 elif batch and 'Executor added' in line:
                     executors.append(line.split(' ')[-4].split(':')[0].strip('('))
+                    worker_count += 1
                 elif batch and 'Finished task' in line and '125/125' in line:
-                    return set(executors), True
-    return set(executors), False
+                    return set(executors), True, worker_count
+    return set(executors), False, worker_count
 
 
 def main():
