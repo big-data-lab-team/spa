@@ -55,16 +55,15 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 sj_elem['id'] = sj
                 sj_elem['start_time'] = None
                 sj_elem['end_time'] = None
-                nodes, success, worker_count = get_jobid_success(sj, s_logs)
-                sj_elem['nodes'] = list(nodes)
+                nodes, success = get_jobid_success(sj, s_logs)
+                sj_elem['nodes'] = nodes
 
                 if success or driver_id is None:
-                    sj_elem['worker_count'] = worker_count
                     sj_elem['succeeded'] = success
                 else:
-                    success, worker_count = get_success(driver_path)
-                    sj_elem['worker_count'] = worker_count
+                    success, workers = get_success(driver_path, list(nodes.keys())[0] if len(nodes) > 0 else None)
                     sj_elem['succeeded'] = success
+                    sj_elem['nodes'] = workers
 
                 sjelems.append(sj_elem)
 
@@ -85,17 +84,18 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
     return job_ids
 
 
-def get_success(fp):
+def get_success(fp, node):
     success = False
-    worker_count = 0
-    if op.isdir(fp):
+    workers = set()
+    if op.isdir(fp) and node is not None:
         with open(op.join(fp, 'stderr'), 'r') as f:
             for line in f:
-                if 'Executor added' in line:
-                    worker_count += 1
+                if 'Executor added' in line and node in line:
+                    proc = line.split(' ')[-4].strip('(').strip(')').split(':')[1]
+                    workers.add(proc)
                 elif 'Finished task' in line and '125/125' in line:
                     success = True
-    return success, worker_count
+    return success, { node: list(workers) }
 
 
 def order_pilots(directory, sjids, exec_mode="batch"):
@@ -167,11 +167,9 @@ def order_pilots(directory, sjids, exec_mode="batch"):
 
     print(len(total_order))
     for idx, elem in enumerate(total_order):
-        elem['worker_count'] = sjids[idx][0]['worker_count'] if len(sjids) > 0 else 0
+        elem['worker_count'] = sum([len(el[1]) for sj in sjids[idx] for el in sj['nodes'].items()])
         elem['sid'] = sjids[idx]
         
-        for sj in sjids[idx]:
-            sj.pop('worker_count')
 
         elem['success'] = True in [sj['succeeded'] for sj in sjids[idx]]
 
@@ -183,8 +181,7 @@ def get_jobid_success(job_id, master_logs):
    
     logfile = glob.glob(op.join(op.abspath(master_logs), '*.{}.out'.format(job_id)))
     batch = False
-    executors = []
-    worker_count = 0
+    executors = {}
 
     if len(logfile) > 0:
         if 'batch' in logfile[0]:
@@ -194,15 +191,26 @@ def get_jobid_success(job_id, master_logs):
         with open(logfile[0], 'r') as f:
             for line in f:
                 if not batch and 'NODE: ' in line:
-                    executors.append(line.split(' ')[-1].strip('\n'))
+                    executors[line.split(' ')[-1].strip('\n')] = []
                 elif '"finishedexecutors"' in line:
-                    return set(executors), False, worker_count
+                    return executors, False
                 elif batch and 'Executor added' in line:
-                    executors.append(line.split(' ')[-4].split(':')[0].strip('('))
-                    worker_count += 1
+                    host_port = line.split(' ')[-4].strip('(').strip(')')
+                    node, proc = host_port.split(':')
+                    
+                    if node in executors:
+                        executors[node].add(proc)
+                    else:
+                        executors[node] = set([proc])
+
                 elif batch and 'Finished task' in line and '125/125' in line:
-                    return set(executors), True, worker_count
-    return set(executors), False, worker_count
+                    for k in executors.keys():
+                        executors[k] = list(executors[k])
+
+                    return executors, True
+    for k in executors.keys():
+        executors[k] = list(executors[k])
+    return executors, False
 
 
 def main():
