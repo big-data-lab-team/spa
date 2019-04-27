@@ -96,13 +96,17 @@ while count < iterations :
         f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']))
         f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']))
         f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']))
-        x = Popen(exps['batch'], bufsize=1, stdout=f_batch, stderr=f_batch)
-        y = Popen(exps['8pilot'], bufsize=1, stdout=f_8pilot, stderr=f_8pilot)
-        z = Popen(exps['16pilot'], bufsize=1, stdout=f_16pilot, stderr=f_16pilot)
+        options = [('batch', f_batch, batch_out),
+                   ('8pilot', f_8pilot, pilot8_out),
+                   ('16pilot', f_16pilot, pilot16_out)]
+        shuffle(options)
+        x = Popen(exps[options[0][0]], bufsize=1, stdout=options[0][1], stderr=options[0][1])
+        y = Popen(exps[options[1][0]], bufsize=1, stdout=options[1][1], stderr=options[1][1])
+        z = Popen(exps[options[2][0]], bufsize=1, stdout=options[2][1], stderr=options[2][1])
 
-        get_results(x, f_batch, "batch", exps['cond'], batch_out)
-        get_results(y, f_8pilot, "8pilot", exps['cond'], pilot8_out)
-        get_results(z, f_16pilot, "16pilot", exps['cond'], pilot16_out)
+        get_results(x, options[0][1], options[0][0], exps['cond'], options[0][2])
+        get_results(y, options[1][1], options[1][0], exps['cond'], options[1][2])
+        get_results(z, options[2][1], options[2][0], exps['cond'], options[2][2])
 
         try:
             shutil.rmtree(batch_out, ignore_errors=True)
