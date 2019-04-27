@@ -61,9 +61,8 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 if success or driver_id is None:
                     sj_elem['succeeded'] = success
                 else:
-                    success, workers = get_success(driver_path, list(nodes.keys())[0] if len(nodes) > 0 else None)
+                    success = get_success(driver_path, list(nodes.keys())[0] if len(nodes) > 0 else None)
                     sj_elem['succeeded'] = success
-                    sj_elem['nodes'] = workers
 
                 sjelems.append(sj_elem)
 
@@ -86,16 +85,12 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
 
 def get_success(fp, node):
     success = False
-    workers = set()
     if op.isdir(fp) and node is not None:
         with open(op.join(fp, 'stderr'), 'r') as f:
             for line in f:
-                if 'Executor added' in line and node in line:
-                    proc = line.split(' ')[-4].strip('(').strip(')').split(':')[1]
-                    workers.add(proc)
-                elif 'Finished task' in line and '125/125' in line:
+                if 'Finished task' in line and '125/125' in line:
                     success = True
-    return success, { node: list(workers) }
+    return success
 
 
 def order_pilots(directory, sjids, exec_mode="batch"):
@@ -169,13 +164,8 @@ def order_pilots(directory, sjids, exec_mode="batch"):
     for idx, elem in enumerate(total_order):
         
         node_workers = {}
-        
-        for sj in sjids[idx]:
-            for k,v in sj['nodes'].items():
-                if k not in node_workers:
-                    node_workers[k] = v
 
-        elem['worker_count'] = sum([len(el[1]) for el in node_workers.items()])
+        elem['worker_count'] = sum([len(el[1]) for sj in sjids[idx] for el in sj['nodes'].items()])
         elem['sid'] = sjids[idx]
         
 
@@ -198,10 +188,26 @@ def get_jobid_success(job_id, master_logs):
 
         with open(logfile[0], 'r') as f:
             for line in f:
-                if not batch and 'NODE: ' in line:
-                    executors[line.split(' ')[-1].strip('\n')] = []
-                elif '"finishedexecutors"' in line:
-                    return executors, False
+                if not batch and 'starting org.apache.spark.deploy.worker.Worker, logging to ' in line:
+                    wlogs = line.split('starting org.apache.spark.deploy.worker.Worker, logging to ')
+
+                    for wl in wlogs:
+                        if len(wl) > 0 and 'failed' not in wl:
+                            wl = wl.strip()
+                            with open(wl, 'r') as w:
+                                for k in w:
+                                    if 'Starting Spark worker ' in k:
+                                        host_port = k.split('Starting Spark worker ')[1].split(' ')[0]
+                                        node, proc = host_port.split(':')
+                                        
+                                        if node in executors:
+                                            executors[node].add(proc)
+                                        else:
+                                            executors[node] = set([proc])
+                        elif 'failed' in wl:
+                            print(wl)
+                    break
+
                 elif batch and 'Executor added' in line:
                     host_port = line.split(' ')[-4].strip('(').strip(')')
                     node, proc = host_port.split(':')
