@@ -1,0 +1,20 @@
+{
+    "name": "16p3d bb inc",
+    "logdir": "/scratch/vhayots/spa/logs",
+    "benchmark":"/home/vhayots/projects/def-glatard/vhayots/spa/16nodes_3dedicated.out",
+    "num_nodes": 16,
+    "SLURM_CONF_GLOBAL": {
+	"account": "def-glatard",
+        "time": "02:30:00",
+        "nodes": 1,
+        "mem": "21G",
+        "cpus-per-task": 1,
+        "ntasks-per-node": 3
+    },
+    "DRIVER": {
+        "modules": ["spark/2.3.0"],
+	    "deploy": "cluster",
+	    "jars": "/home/vhayots/projects/def-glatard/vhayots/niftijio/target/scala-2.12/*.jar", 
+        "program": "/home/vhayots/projects/def-glatard/vhayots/spa/example/scala_increment/target/scala-2.11/increment-app_2.11-1.0.jar 16p3d-bb-inc /scratch/vhayots/splits /scratch/vhayots/spa/scalaout_16pilots 10 --delay 120"
+    }
+}

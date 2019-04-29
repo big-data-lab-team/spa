@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
+import os
 from os import path as op
+import sys
+import hashlib
+
+def gen_hash(template):
+    return '{0}-{1}'.format(
+            hashlib.sha1(template.encode("utf-8")).hexdigest(),
+            hashlib.md5(os.urandom(16)).hexdigest())
+
+import logging
+rand_hash = gen_hash(sys.argv[1])
+hist_fn = op.abspath('pilot_{0}.log'.format(rand_hash))
+
+logging.basicConfig(filename=hist_fn, level=logging.DEBUG,
+                    filemode='w+',
+                    format='%(asctime)s %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p')
+
 from datetime import datetime
 from slurmpy import Slurm
 from subprocess import Popen, PIPE
@@ -7,24 +25,47 @@ from multiprocessing import cpu_count
 import argparse
 import time
 import json
-import os
-import hashlib
 import threading
 import requests
+from copy import deepcopy
+import glob
 
 
-def gen_hash(template):
-    return '{0}-{1}'.format(
-            hashlib.sha1(template.encode("utf-8")).hexdigest(),
-            hashlib.md5(os.urandom(16)).hexdigest())
+def write_bench_start(bench):
+    with open(bench, 'a+') as f:
+        f.write(",".join([os.linesep + datetime.now().isoformat(),
+                          str(time.time())]))
+
+
+def write_bench_end(bench):
+    with open(bench, 'a+') as f:
+        f.write(',{}'.format(str(time.time())))
+
+
+def write_bench_result(bench, result):
+    with open(bench, 'a+') as f:
+        f.write(',{}'.format(result))
+
+def job_status(filename):
+    with open(filename, 'r') as df:
+        errors = ["{0} {1}".format(i,l) for i,l in enumerate(df) if 'ERROR' in l]
+
+    if len(errors) > 0:
+        logging.error('Program errored at lines:\n %s', '\n'.join(errors))
+        result = 'ERRORED'
+    else:
+        result = 'FINISHED'
+    return result
 
 
 def start_workers(s, num_nodes, compute_conf, template, rand_hash,
                   submit_func, jobs):
 
+    logging.info('Launching pilots')
     for i in range(num_nodes):
         # Create masters/workers in the node
         if submit_func == "bash":
+            logging.info('Launching pilot thread')
             thread = threading.Thread(target=s.run,
                                       kwargs=dict(command=template,
                                                   cmd_kwargs=compute_conf,
@@ -37,22 +78,26 @@ def start_workers(s, num_nodes, compute_conf, template, rand_hash,
             worker_hash = "{0}-{1}".format(rand_hash, i)
             job_id = s.run(template, name_addition=worker_hash,
                            cmd_kwargs=compute_conf, _cmd=submit_func)
+            logging.info('Launched SLURM pilot %s', job_id)
             jobs.append(str(job_id))
 
     while(num_nodes > 0
           and not op.isfile(compute_conf["mstr_log"])):
+        logging.warning('Master not initialized. Sleeping for 5 seconds')
         time.sleep(5)
 
     master_id = ""
     with open(compute_conf["mstr_log"], 'r') as f:
         master_id = f.readline().strip(os.linesep)
+        logging.info('Master created with id %s', master_id)
 
-    print(jobs)
+    #print(jobs)
     return master_id
 
 
 def configure(conf, job_id, rand_hash):
 
+    logging.debug('Configuring SLURM/Pilot template')
     program_start = datetime.now().strftime("%Y-%m-%d")
 
     if "COMPUTE" not in conf:
@@ -85,42 +130,62 @@ def configure(conf, job_id, rand_hash):
 
     conf["COMPUTE"]["logdir"] = conf["logdir"]
 
+    logging.debug('Done configuration')
     return program_start
 
 
 def submit_sbatch(template, conf):
+    logging.warning(hist_fn)
+
+    logging.info('Starting batch submission')
 
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write(os.linesep + datetime.now().isoformat() +
-                    '\t' + str(time.time()))
+        write_bench_start(conf["benchmark"])
 
     submit_func = "sbatch"
     rand_hash = "" #gen_hash(template)
     job_id = '${SLURM_JOB_ID}'
-    configure(conf, job_id, rand_hash)
+    program_start = configure(conf, job_id, rand_hash)
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     conf["DRIVER"]["mstr_bench"] = conf["COMPUTE"]["mstr_bench"]
+    logging.info('Command to be executed: %s', conf["DRIVER"]["program"])
     job_id = s.run(template, cmd_kwargs=conf["DRIVER"], _cmd=submit_func)
 
     job_id = str(job_id)
+
+    logging.info('Batch job ID: %s', job_id)
     condition = True
+    time.sleep(5)
 
     while condition:
         p = Popen(["squeue", "-j", job_id], stdout=PIPE, stderr=PIPE)
         (out, err) = p.communicate()
-
         out = str(out, 'utf-8')
+
+        logging.debug("Squeue output: %s", out)
+
         out = out.split(os.linesep)
         out.pop(0)
-        queue = [l.split(' ')[0] for l in out if l.split(' ') != '']
+        queue = [l.strip().split(' ')[0] for l in out if l.strip().split(' ') != '']
 
         condition = job_id in queue
-        time.sleep(5 * 60)
+        if condition:
+            logging.info('Job still running, sleeping for 5 mins')
+            time.sleep(5 * 60)
+
+    logging.info('Batch Job terminated')
+    result = 'UNKNOWN'
+    logfile = [op.join(d,f) for d,s,lf in os.walk(op.abspath('logs')) for f in lf if '{}.err'.format(job_id) in f]
+
+    if len(logfile) > 0:
+        logging.info('Driver logfile: %s', logfile[0])
+        result = job_status(logfile[0])
+    else:
+        logging.warning('No logfile generated.')
 
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write('\t' + str(time.time()))
+        write_bench_end(conf["benchmark"])
+        write_bench_result(conf["benchmark"], result)
 
 
 def submit_locally(template, conf):
@@ -147,17 +212,20 @@ def submit_locally(template, conf):
 
 
 def submit_pilots(template, conf):
-    
-    if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write(os.linesep + datetime.now().isoformat() + '\t' + 
-                    str(time.time()))
+
     submit_func = "sbatch"
-    rand_hash = gen_hash(template)
     slurm_job_id = '${SLURM_JOB_ID}'
     s = Slurm(conf["name"], conf["SLURM_CONF_GLOBAL"])
     program_start = configure(conf, slurm_job_id, rand_hash)
+    
+    logging.warning(hist_fn)
+
+    logging.info('Starting pilot submission')
+    if "benchmark" in conf:
+        write_bench_start(conf["benchmark"])
+
     jobs = []
+    result = "UNKNOWN"
 
     if conf["DRIVER"]["deploy"] == "cluster":
         program = ["\'spark-submit", "--master", "$MASTER_URI",
@@ -171,6 +239,7 @@ def submit_pilots(template, conf):
         program.extend([conf["DRIVER"]["program"], "\'"])
         conf["COMPUTE"]["driver_prog"] = " ".join(program)
 
+    logging.info('Program to launch: %s', program)
     master_url = start_workers(s, conf["num_nodes"], conf["COMPUTE"],
                                template, rand_hash, "sbatch", jobs)
 
@@ -212,39 +281,68 @@ def submit_pilots(template, conf):
 
     else:
         driver_rest = ""
+        driver_api = None
+        driver_id = None
+        spark_log = op.abspath('sworker_logs')
+        logging.info('Spark worker log directory: %s', spark_log)
+
         while not op.isfile(conf["COMPUTE"]["drvr_log"]):
-            print("driver log not created")
+            logging.warning("Driver log %s not created. Sleeping for 5 seconds",
+                         conf["COMPUTE"]["drvr_log"])
             time.sleep(5)
-        with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
-            driver_rest = f.readline().strip(os.linesep)
 
-        r = requests.get(driver_rest)
-        driver_api = r.json()
-        print(driver_api)
-
-        while (driver_api["driverState"] == "SUBMITTED"):
+        while "http" not in driver_rest:
+            with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
+                driver_rest = f.readline().strip(os.linesep)
+                logging.info('Driver URL at: %s', driver_rest)
             time.sleep(5)
+
+        try:
             r = requests.get(driver_rest)
             driver_api = r.json()
-            print(driver_api)
+            logging.debug("Driver status: %s", driver_api)
+            driver_id = driver_api["submissionId"]
+        except Exception as e:
+            logging.error(str(e))
 
-        while (driver_api["driverState"] == "RUNNING"):
+        while (driver_api is not None and "driverState" in driver_api
+               and driver_api["driverState"] == "SUBMITTED"):
+            logging.warning('Driver in SUBMITTED state. Sleeping for 5 seconds')
+            time.sleep(5)
+
+            try:
+                r = requests.get(driver_rest)
+                driver_api = r.json()
+                logging.debug(driver_api)
+                driver_id = driver_api["submissionId"]
+            except Exception as e:
+                logging.error(str(e))
+                break
+
+        while (driver_api is not None and "driverState" in driver_api
+               and driver_api["driverState"] == "RUNNING"):
+            logging.info('Driver currently in RUNNING state')
             p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
-            print("stdout", out)
-            print("stderr", err)
             out = str(out, 'utf-8')
+            err = str(err, 'utf-8')
+            logging.debug("stdout: %s", out)
+            logging.debug("stderr: %s", err)
 
-            running_jobs = out.split(os.linesep)
-            running_jobs = [l.split(' ')[0] for l in running_jobs if l.split(' ')[0] != '']
+            if 'send/recv' in out or 'send/recv' in err:
+                continue
+        
+            running_jobs = out.split(os.linesep)[1:]
+            running_jobs = [l.strip().split(' ')[0] for l in running_jobs if l.strip().split(' ')[0] != '']
 
-            print('Running jobs:', running_jobs)
+            logging.info('Currently running jobs: %s', " ,".join(running_jobs))
             jobs = list(set(jobs).intersection(running_jobs))
-            print(jobs)
 
             nodes_to_start = conf["num_nodes"] - len(jobs)
+            old_jobs = deepcopy(jobs)
 
-            if nodes_to_start > 0:
+            if nodes_to_start != conf["num_nodes"] and nodes_to_start > 0:
+                logging.info('Starting %d new pilots', nodes_to_start)
                 master_url = start_workers(s, nodes_to_start, conf["COMPUTE"],
                                            template, rand_hash, "sbatch", jobs)
 
@@ -253,23 +351,41 @@ def submit_pilots(template, conf):
             try:
                 r = requests.get(driver_rest)
                 driver_api = r.json()
-                print(driver_api)
+
+                result = driver_api["driverState"]
+                #driver_id = driver_api["submissionId"]
+                #print(driver_api)
 
             except Exception as e:
-                print(str(e))
+                logging.error(str(e))
                 break
 
+        logging.info('Program execution completed')
         if len(jobs) > 0:
             args = ["scancel"]
             args.extend(jobs)
-            print(args)
+            logging.info('Cancelling jobs: %s', ', '.join(jobs))
             p = Popen(args, stdout=PIPE, stderr=PIPE)
             (out, err) = p.communicate()
+            logging.debug('stdout: %s', str(out, 'utf-8'))
+            logging.debug('stderr: %s', str(err, 'utf-8'))
 
-        print(out, err)
     if "benchmark" in conf:
-        with open(conf["benchmark"], 'a+') as f:
-            f.write('\t' + str(time.time()))
+        if result != 'FINISHED' and driver_id is not None:
+            logging.debug('Driver ID: %s', driver_id)
+            driver_log = [op.join(d, f[0]) for d,s,f in os.walk(spark_log) if driver_id in d]
+            driver_err_log = [i for i in driver_log if 'stderr' in i]
+
+            logging.debug('Driver logfile: %s', driver_err_log)
+            
+            if len(driver_err_log) > 0:
+
+                result = job_status(driver_err_log[0])
+
+        write_bench_end(conf["benchmark"])
+        write_bench_result(conf["benchmark"], result)
+
+    logging.shutdown()
 
 def main():
 

@@ -1,0 +1,3 @@
+python raw_to_json.py ../results/ lb_pilot_cond.out  /scratch/vhayots/spa/logs/ ./logs/
+python raw_to_json.py ../results/ lb_batch_cond.out  /scratch/vhayots/spa/logs/ ./logs/ -b
+python gen_figures.py ../data/batch_total_dedicated.json ../data/pilots_total_dedicated.json
