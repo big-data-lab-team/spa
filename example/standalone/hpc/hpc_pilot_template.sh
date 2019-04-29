@@ -80,6 +80,9 @@ pilot_program(){
         		MASTER_URI=${MASTER_URI/%????/$REST_SERVER_PORT} # cluster mode requires REST port
 			echo 'Cluster deploy master: ' $MASTER_URI
 
+			app_log_dir=${SLURM_JOBID}-applogs
+			mkdir $app_log_dir
+
 			eval $driver_prog > output 2>&1
 			cat output
 			driverid=`cat output | grep submissionId | grep -Po 'driver-\d+-\d+'`
