@@ -27,28 +27,33 @@
 \maketitle
 
 \begin{abstract}
-    Big Data processing engines such as Apache Spark are increasingly 
-    used to process scientific data. These processing engines, however, 
-    have been primarily designed to work on dedicated infrastructure 
-    and are not well designed to work on High-Performance Computing 
-    (HPC) systems commonly available to researchers. Typical mechanisms 
-    for launching Spark-based applications on HPC clusters involve 
-    batch-requesting of the resources which can greatly increase 
-    queuing times of the Big Data applications. Pilot scheduling is a 
-    well known strategy that decouples resource provisioning from task 
-    scheduling, thereby allowing applications to leverage dynamic 
-    pools of computing resources. Here, we introduce SPA, an 
-    open-source
-    pilot-job submission system designed for launching Apache Spark pipelines 
-    on Slurm-based clusters. SPA leverages optimizations available in Spark, 
-    such as robust workers, masters and driver, in addition to 
-    checkpointing, to ensure robustness against nodes lost due to
-    expired walltime. SPA also ensures that a 
-    user-specified number of pilots is maintained in the cluster in 
-    order to ensure a constant level of parallelism. Should pilots be 
-    idle for a certain amount of time, they are terminated by 
-    the system. We evaluate SPA on neuroimaging pipelines, our main domain of interest. \tristan{Add a sentence on results when you have them.}
+    Big Data has become prominent throughout many scientific fields and, as a
+    result, scientific communities have sought out Big Data frameworks to 
+    accelerate the processing of their increasingly data-intensive pipelines.
+    However, while scientific communities typically rely on High-Performance 
+    Computing (HPC) clusters for the parallelization of their pipelines, many 
+    popular Big Data frameworks such as Hadoop and Spark were primarily designed
+    to be executed on dedicated commodity infrastructure. Differences found between
+    these infrastructures and the policies that surround them limit the advantages
+    of deploying Big Data pipelines on HPC infrastructure. For instance, HPC
+    clusters typically employ a batch job submission system requiring users to
+    specify details on number of cores, nodes, amount of memory and duration.
+    Big Data engines, such as Spark, have no built-in mechanism to interact with
+    HPC batch job submission systems. Morever, the details required by the HPC
+    schedulers are not necessarily initially known to users of Big Data frameworks.
 
+    Pilot scheduling strategies have been developed to address the limitations 
+    of traditional HPC batch job schedulers. Pilot schedulers decouple resource
+    provisioning from task scheduling, thereby enabling efficient resource
+    utilization through dynamic scheduling. This paper evaluates the benefits 
+    pilot-scheduling strategies over traditional batch submission
+    on HPC clusters with overlay Apache Spark clusters. We first evaluate the
+    overall speedup brought on by employing pilot-scheduling strategies. We then
+    examine the robustness to master and driver failures, which may be frequent 
+    when underestimating pilot walltime. Spark built-in checkpointing is also 
+    investigated in relation to pilot expiration.
+
+    Our results show that\ldots TBD.
 \end{abstract}
 
 \section{Introduction}
@@ -138,6 +143,13 @@ neuroimaging Spark applications on HPC systems.
 
 
 \section{Materials and Methods}\label{sec:methods}
+    SPA consists of a Python-based driver with bash-templates that are called 
+    using the Slurmpy~\cite{slurmpy} library. In order to commence pilot-scheduling,
+    the user must supply the bash template of choice and a JSON configuration 
+    file which contains details on pilot node requirements and the desired application
+    to be launched. Currently, there only exists a single pilot template for launching
+    Spark jobs on a Slurm-based HPC cluster. The pseudocode for that template can 
+    be seen in ~\ref{Figure:pilot-temp}.
     \todo{walltime parameter of workflow}
     \subsection{Added value of pilot scheduling}
         \todo{execution of a batch cluster vs dynamic (pilot) cluster}
