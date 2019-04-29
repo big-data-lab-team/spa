@@ -11,6 +11,7 @@
 
 \newcommand{\tristan}[1]{\color{red}\textbf{Note from Tristan}:
       #1 \color{black}}
+\newcommand{\TG}[1]{\tristan{#1}}
 
 \newcommand{\todo}[1]{\marginpar{\parbox{18mm}{\flushleft\tiny\color{red}\textbf{TODO}:
       #1}}}
@@ -30,20 +31,27 @@
     Big Data has become prominent throughout many scientific fields and, as a
     result, scientific communities have sought out Big Data frameworks to 
     accelerate the processing of their increasingly data-intensive pipelines.
+    \TG{I'd write the previous sentence in continuous present tense, since I think
+    this is an on-going process.}
     However, while scientific communities typically rely on High-Performance 
     Computing (HPC) clusters for the parallelization of their pipelines, many 
     popular Big Data frameworks such as Hadoop and Spark were primarily designed
-    to be executed on dedicated commodity infrastructure. Differences found between
+    to be executed on dedicated commodity infrastructures. Differences found between
     these infrastructures and the policies that surround them limit the advantages
     of deploying Big Data pipelines on HPC infrastructure. For instance, HPC
     clusters typically employ a batch job submission system requiring users to
     specify details on number of cores, nodes, amount of memory and duration.
     Big Data engines, such as Spark, have no built-in mechanism to interact with
     HPC batch job submission systems. Morever, the details required by the HPC
-    schedulers are not necessarily initially known to users of Big Data frameworks.
+    schedulers \TG{be more specific than ``details'': do you mean ``scheduling policies'',
+    ``application resource requirerments?''
+    } are not necessarily initially known to users of Big Data frameworks.
+    \TG{The previous paragraph is a bit long: it could be summarized to 2-3
+    sentences.}
 
     Pilot scheduling strategies have been developed to address the limitations 
-    of traditional HPC batch job schedulers. Pilot schedulers decouple resource
+    of traditional HPC batch job schedulers \TG{You could give examples of pilot schedulers as you did with Spark and Hadoop}.
+    Pilot schedulers decouple resource
     provisioning from task scheduling, thereby enabling efficient resource
     utilization through dynamic scheduling. This paper evaluates the benefits 
     pilot-scheduling strategies over traditional batch submission
@@ -58,7 +66,8 @@
 
 \section{Introduction}
 
-In the recent years, neuroimaging Big Data has become more accessible, as a
+In the recent years, neuroimaging \TG{If you want to put neuroimaging first, then you need to explain it. Just say that it's an example among many fields}
+Big Data has become more accessible, as a
 result of the growing number of open-data initiatives~\cite{openneuro, hcp, ukbiobank}. However, the
 processing of such large datasets using standard neuroimaging pipelines has 
 become cumbersome. As a result, many researchers are moving towards Big Data 
@@ -117,7 +126,7 @@ to your pre-print for more information.}
 
 The recommended method for launching Spark applications on HPC schedulers 
 involves batch requesting all the necessary resources and launching a standalone
-Spark cluster once the resources have been requested. This could significantly increase
+Spark cluster once the resources have been requested \TG{Add link to Compute Canada's instructions?}. This could significantly increase
 the scheduling time of Spark-based applications as a large amount of resources 
 may be necessary to process Big Data. In a pilot-scheduling model, rather than requesting all the resources 
 at once, a Spark cluster is launched with a subset of the resources and is expanded as 
@@ -127,7 +136,7 @@ to be scheduled faster.
 
 There have been some efforts to use pilot-scheduling approaches with Spark applications
 running on HPC \cite{jha and spark on pbs paper}. However, these projects are either
-not open-source or not necessarily compatible with Slurm.
+not open-source or not necessarily compatible with Slurm. 
 
 Here we present SPA, a pilot-scheduling library for launching Spark applications 
 on HPC infrastructures. This library currently enables the launching of Spark applications
@@ -140,7 +149,21 @@ lost due to walltime expiration, additional pilot nodes are launched
 until the driver completes. SPA facilitates the execution of large 
 neuroimaging Spark applications on HPC systems.
 
+\TG{The introduction is still very much geared toward the presentation of 
+the SPA software. Instead, I think it should introduce the question whether pilot jobs
+are useful at all to overlay schedulers, explain why they may be, and why they may not (there is already an overlay scheduler,
+and resource heterogeneity is limited). You could explain that the traditional benefits of pilot-job systems are:
+\begin{itemize}
+    \item Address worker node heterogeneity
+    \item Address worker node failures (software, incl walltime expirations, or hardware)
+    \item Address variable queuing times
+    \item Tolerant to resource requirement overestimation, in particular walltime and CPU
+    \item Increase workload distribution (use more nodes)
+\end{itemize}
+Among these, (1) and to some extent (2) are already addressed by an overlay scheduler.
 
+The title should also reflect this.
+}
 
 \section{Materials and Methods}\label{sec:methods}
     SPA consists of a Python-based driver with bash-templates that are called 
