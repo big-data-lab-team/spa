@@ -166,18 +166,15 @@ on overall performance and robustness.
 
 In this paper, we will analyse the effects of pilot scheduling strategies with an 
 overlay Spark cluster. Our evaluation will be broken down into two parts: 1)
-the overall added value of pilots, and 2), tolerance to failures. Part 1 will 
-investigate the effect of queuing times on pilot applications. 
-Here we present SPA, a pilot-scheduling library for launching Spark applications 
-on HPC infrastructures. This library currently enables the launching of Spark applications
-on Slurm-based clusters by dividing the total amount of resources required and requesting
-multiple instances of subsets of the resources at a time. When a single 
-instance is started, a Standalone Spark cluster is started. Built-in 
-fault-tolerance of Spark masters and workers is leveraged, in addition 
-to Driver fault tolerance for Scala-based applications. When nodes are 
-lost due to walltime expiration, additional pilot nodes are launched 
-until the driver completes. SPA facilitates the execution of large 
-neuroimaging Spark applications on HPC systems.
+the added value of pilots, and 2), tolerance to failures. For determining the 
+added value of pilots, we will investigate the effect of queuing times on 
+pilot applications as compared to a batch requests. As much of the application's
+tolerance to failures are features brought on by the overlay Spark cluster, in
+Part 2 we will introduce failures that would be typical to pilot scheduling 
+approaches (e.g. node failures due to walltime expiration). This part will be 
+broken down into master failures, driver failures and checkpointing. As pilots 
+may need to be replenished during execution, we will also consider the effects of 
+job queues \todo{reword}.
 
 \TG{The introduction is still very much geared toward the presentation of 
 the SPA software. Instead, I think it should introduce the question whether pilot jobs
