@@ -158,11 +158,16 @@ more resources get allocated. This, in turn, may reduce the overall processing o
 an application as less resources are requested at once and are therefore more likely
 to be scheduled faster.
 
-Pilot scheduling has been applied to scientific workflow engines including Pegasus,
-PSOM and RADICAL-Pilot. While there have been some efforts on implementing pilot scheduling
-approaches for \cite{jha and spark on pbs paper}. However, these projects are either
-not open-source or not necessarily compatible with Slurm. 
+Pilot scheduling techniques have already been applied to scientific workflow engines, such as
+Pegasus, PSOM and RADICAL-Pilot~\cite{}. While there have been some efforts on
+implementing pilot scheduling approaches for Apache Spark\cite{jha and spark on pbs paper},
+research is limited and none of the them detail the effects of an overlay cluster
+on overall performance and robustness. 
 
+In this paper, we will analyse the effects of pilot scheduling strategies with an 
+overlay Spark cluster. Our evaluation will be broken down into two parts: 1)
+the overall added value of pilots, and 2), tolerance to failures. Part 1 will 
+investigate the effect of queuing times on pilot applications. 
 Here we present SPA, a pilot-scheduling library for launching Spark applications 
 on HPC infrastructures. This library currently enables the launching of Spark applications
 on Slurm-based clusters by dividing the total amount of resources required and requesting
