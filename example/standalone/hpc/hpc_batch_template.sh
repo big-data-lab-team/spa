@@ -49,7 +49,9 @@ batch_program()
 
     if [ ! -z "$program" ]
     then 
-        spark-submit --master ${MASTER_URL} --executor-memory ${SLURM_SPARK_MEM}M $program
+	app_log_dir=${SLURM_JOBID}-applogs
+	mkdir $app_log_dir
+        SPARK_NO_DAEMONIZE=1 spark-submit --master ${MASTER_URL} --executor-memory ${SLURM_SPARK_MEM}M $program --log_dir $PWD/$app_log_dir
     fi
 
     kill $slaves_pid

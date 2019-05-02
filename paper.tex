@@ -18,7 +18,8 @@
 \definecolor{headcolor}{gray}{0.9}
 
 \begin{document}
-\title{SPA: An Apache Spark Pilot scheduler\\ for HPC applications}
+\title{Evaluation of dynamic resource allocation strategies for overlay Apache
+       Spark clusters on HPC}
 \author{
     \IEEEauthorblockN{
         Val\'erie Hayot-Sasson and Tristan Glatard
@@ -66,41 +67,65 @@
 
 \section{Introduction}
 
-In the recent years, neuroimaging \TG{If you want to put neuroimaging first, then you need to explain it. Just say that it's an example among many fields}
-Big Data has become more accessible, as a
-result of the growing number of open-data initiatives~\cite{openneuro, hcp, ukbiobank}. However, the
-processing of such large datasets using standard neuroimaging pipelines has 
-become cumbersome. As a result, many researchers are moving towards Big Data 
-engines, such as Apache Spark~\cite{spark} and Dask~\cite{sdask}, to 
-create their processing pipelines. Unlike traditional neuroimaging 
-engines, Big Data engines were designed to be executed on dedicated 
-commodity infrastructures using Big Data schedulers. However, 
-researchers still largely rely on High Performance Computing (HPC) 
-infrastructure to process their data, although they may have access to 
-clouds or local workstations.
+With the increasing volume of data being collected and shared, Big Data has become
+an important area of focus to many scientific domains. As is the case with neuroimaging,
+dataset available publicly now reach up to Petabytes in size~\cite{UKBiobank, hcp}. Average workstations found in research lab would not be
+able to support the processing of such large dataset, leaving researchers to look 
+into cloud or High-Performance Computing~(HPC) solutions. Whereas both options are
+suitable for the processing of scientific Big Data, HPC clusters remain the more 
+sought after solution, potentially due to its cost-effectiveness.
 
-High-Performance Computing infrastructure differs from the commodity infrastructure 
-typically used by Big Data platforms in that it is not dedicated. That is, there 
-are multiple users running a variety of different applications and all using the 
-same resources. Schedulers used on HPC infrastructure include PBS, SGE, Slurm, HTCondor and 
-TORQUE~\cite{schedulers}. The majority of these are batch submission schedulers
-in which the number of resources are requested by the user and the specified 
-program is executed on the infrastructure.
+Scientific workflows may be quite compute intensive, requiring more than a few
+hours to complete (\cite{freesurfer, fmriprep, a paper which mentions duration}).
+The coupling of large datasets with compute-intensive workflows may result in 
+unreasonably long processing times. Such limitations restrict the amount data 
+utilized in scientific experiments. To reduce the effects of Big Data on processing
+times, researchers have begun to move towards employing Big Data frameworks for their
+analyses. Examples of Big Data frameworks including Hadoop MapReduce~\cite{Hadoop},
+Apache Spark~\cite{Spark} and Dask~\cite{Dask}. However, these frameworks were 
+designed with dedicated commodity infrastructure in mind, and, with the exception
+of Dask, do not support traditional HPC schedulers.
 
-Another popular HPC scheduling approach,
-implemented notably by HTCondor~\cite{htcondor}, is known as pilot scheduling. Rather than requesting
-all necessary resources in a single batch call, a pilot-scheduling system will request
-multiple instances of subsets of the required resources. Processing starts 
-as soon as a minimal amount of resources are allocated, and can be replenished if 
-resources are lost. Such a scheduling approach decreases the time a 
-user spends in the queue waiting for resources as less resources are 
-being requested per instance.\todo{need citation} In addition, pilot 
-scheduling makes it easier for users to estimate the number of 
-cores required by their application, as a slight overestimation would not impact queuing 
-time. Many scientific workflow engines are compatible with 
-pilot-scheduling schedulers~\cite{nipype and others} and some others 
-exclusively use pilot-scheduling approaches~\cite{Pegasus and PSOM}. 
-\tristan{I'm not sure if Pegasus is exclusively pilot based.}
+Within High-Performance Computing clusters, many users processing a variety of different
+applications, share resources. These shared resources include storage (e.g. Parallel file system) and 
+compute node resources (memory, cpu, local disk space, etc.). In order for users to 
+gain access to shared compute resources, HPC clusters typically employ schedulers for 
+batch resource provisioning. Examples of such schedulers include PBS, SGE, Slurm and 
+TORQUE~\cite{schedulers}. These schedulers require that the user specify the amount
+of resources required and the duration that they require the resources for. The users 
+are then placed in a queue at a position based on the user's priority and resource 
+availability.
+
+There are several limitations to running applications on batch HPC schedulers, 
+particularly in the face of Big Data. For instance, users may not necessarily 
+know the exact requirements of the applications. With applications that are 
+both data- and compute-intensive, this may result in the user overestimating the
+resources required and the duration that these resources are required for. Frequent
+high overestimates may create bottlenecks in the system, preventing other users
+from occupying allocated idle resources. In contrast, users may underestimate required 
+resources. This may subsequently result in many failures within the application leading to
+additional re-executions of the same application. This is problematic for the user
+as their priority may be affected by the cluster usage. Additionally, the user may 
+require more time on the cluster to relaunch non-checkpointed and interrupted 
+tasks. Furthermore, Big Data frameworks, such as Apache Spark, do not interact naturally
+with HPC schedulers and typically rely on other schedulers for resource provisioning
+and task scheduling. Therefore, to run Big Data applications on HPC schedulers, 
+it is also necessary to start an overlay cluster.
+
+
+
+In contrast to static resource provisioning, as is the case with batch HPC schedulers, 
+dynamic resource provisioning, known as pilot job or glide-in scheduling, exists. 
+This dynamic resource provisioning allows the user to specify a minimum and maximum 
+amount of resources, and the cluster can expand and contract depending on application requirements.
+Each pilot may consist of the minimal amount of resources required to launch the 
+application. As each pilot would request allocation of fewer resources than that of a batch
+request, Pilot Jobs would typically spend less time on the resource allocation 
+queue. Furthermore, although individual pilots may expire due to walltimes, the dynamic
+nature of pilots allows the entire application to surpass walltime limitations, as
+additional pilots may be added to the pilot queue until application completion. 
+Examples of HPC schedulers employing pilot strategies include HTCondor~\cite{htcondor}
+and DIRAC~\cite{DIRAC}. \todo{maybe mention PSOM and Pegasus here}
 
 Apache Spark is a popular Big Data framework, commonly used in both industrial
 and academic settings. Although it is a Scala-based framework, it also has APIs
@@ -109,8 +134,7 @@ in-memory processing of pipelines by co-locating tasks and data, which provided 
  Through the use of RDDs, it also became possible to execute iterative 
 workflows -- something not easily doable in older frameworks such as Hadoop MapReduce.
 Schedulers for Spark include its built-in standalone schedule, Yet Another Resource Negotiator (YARN),
-and Mesos~\cite{yarn, mesos}. Out of the three schedulers, only Mesos can be used
-as an HPC scheduler, which is not frequently done. \tristan{why?}
+and Mesos~\cite{yarn, mesos}.
 
 
 Projects such as Thunder~\cite{thunder}, a PySpark-compatible library 
@@ -134,20 +158,23 @@ more resources get allocated. This, in turn, may reduce the overall processing o
 an application as less resources are requested at once and are therefore more likely
 to be scheduled faster.
 
-There have been some efforts to use pilot-scheduling approaches with Spark applications
-running on HPC \cite{jha and spark on pbs paper}. However, these projects are either
-not open-source or not necessarily compatible with Slurm. 
+Pilot scheduling techniques have already been applied to scientific workflow engines, such as
+Pegasus, PSOM and RADICAL-Pilot~\cite{}. While there have been some efforts on
+implementing pilot scheduling approaches for Apache Spark\cite{jha and spark on pbs paper},
+research is limited and none of the them detail the effects of an overlay cluster
+on overall performance and robustness. 
 
-Here we present SPA, a pilot-scheduling library for launching Spark applications 
-on HPC infrastructures. This library currently enables the launching of Spark applications
-on Slurm-based clusters by dividing the total amount of resources required and requesting
-multiple instances of subsets of the resources at a time. When a single 
-instance is started, a Standalone Spark cluster is started. Built-in 
-fault-tolerance of Spark masters and workers is leveraged, in addition 
-to Driver fault tolerance for Scala-based applications. When nodes are 
-lost due to walltime expiration, additional pilot nodes are launched 
-until the driver completes. SPA facilitates the execution of large 
-neuroimaging Spark applications on HPC systems.
+In this paper, we will analyse the effects of pilot scheduling strategies with an 
+overlay Spark cluster. Our evaluation will be broken down into two parts: 1)
+the added value of pilots, and 2), tolerance to failures. For determining the 
+added value of pilots, we will investigate the effect of queuing times on 
+pilot applications as compared to a batch requests. As much of the application's
+tolerance to failures are features brought on by the overlay Spark cluster, in
+Part 2 we will introduce failures that would be typical to pilot scheduling 
+approaches (e.g. node failures due to walltime expiration). This part will be 
+broken down into master failures, driver failures and checkpointing. As pilots 
+may need to be replenished during execution, we will also consider the effects of 
+job queues \todo{reword}.
 
 \TG{The introduction is still very much geared toward the presentation of 
 the SPA software. Instead, I think it should introduce the question whether pilot jobs
