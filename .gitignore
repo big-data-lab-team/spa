@@ -3,3 +3,5 @@ paper.bbl
 paper.blg
 paper.log
 paper.pdf
+experiments/code/*.int.cedar.computecanada.ca-bench.txt
+experiments/code/pilot*.log
