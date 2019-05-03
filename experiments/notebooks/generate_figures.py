@@ -280,8 +280,9 @@ get_batch_avgpilots = lambda x:(((len(set(x['sid'][0]['nodes']))
                                  / (x['end_time'] - x['start_time'])),
                                 x['end_time'] - x['start_time'])
 
-get_batch_avgw = lambda x:(((len(set(['{0}:{1}'.format(k, v)
-                                      for k,v in x['sid'][0]['nodes'].items()]))
+get_batch_avgw = lambda x:(((len(set(['{0}:{1}'.format(k, p)
+                                      for k,v in x['sid'][0]['nodes'].items()
+                                      for p in v]))
                                  * (x['sid'][0]['end_time']
                                     - x['sid'][0]['start_time']))
                                 / (x['end_time'] - x['start_time'])),
