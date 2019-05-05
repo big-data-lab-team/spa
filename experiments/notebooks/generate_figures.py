@@ -32,7 +32,9 @@ dedicated_2 = makespan_dict()
 dedicated_3 = makespan_dict()
 dedicated_4 = makespan_dict()
 
-get_makespan = lambda x: x['end_time'] - x['start_time'] if x['success'] else 0
+get_makespan = lambda x: (x['end_time'] - x['start_time']
+                          if x['success'] and x['end_time'] is not None
+                          else 0)
 is_same = lambda x, i: x in pilots8[i]['name'] and x in pilots16[i]['name']
 
 
@@ -121,16 +123,19 @@ def makespan_box(d1, d2, d3, d4, num_pilots, system="Beluga", save=None):
 
 def queuing_time(bd, pd):
     return [bd[i]['sid'][0]['start_time'] -
-            min([p['start_time'] for p in pd[i]['sid']])
+            min([p['start_time'] for p in pd[i]['sid']
+                 if p['start_time'] is not None])
             for i in range(len(bd))
-            if bd[i]['success'] and pd[i]['success']]
+            if bd[i]['success'] and bd[i]['end_time'] is not None
+            and pd[i]['success'] and pd[i]['end_time'] is not None]
 
 
 def makespan_all(bd, pd):
     return [(bd[i]['end_time'] - bd[i]['start_time']) - 
             (pd[i]['end_time'] - pd[i]['start_time'])
             for i in range(len(bd))
-            if bd[i]['success'] and pd[i]['success']]
+            if bd[i]['success'] and bd[i]['end_time'] is not None
+            and pd[i]['success'] and pd[i]['end_time'] is not None]
 
 
 def makespan_queue(num_pilot):
@@ -162,10 +167,12 @@ def add_kv(d, k, v, w=True):
 
     if len(v) > 0 and type(v[0]) == dict:
         v = get_ld_keys(v)
-    if k not in d:
-        d[k] = set(v)
-    else:
-        d[k].update(v)
+
+    if k is not None:
+        if k not in d:
+            d[k] = set(v)
+        else:
+            d[k].update(v)
 
 
 def get_ld_keys(l, w=False):
@@ -207,7 +214,8 @@ def get_pilot_info(job, t, w=False):
     # Second passage
     for sid in job['sid']:
         for k,v in makespan_dict.items():
-            if k > sid['start_time'] and k < sid['end_time']:
+            if (sid['end_time'] is not None and sid['start_time'] is not None
+                and k > sid['start_time'] and k < sid['end_time']):
                 if t == 'nodes':
                     v.update(get_ld_keys(sid[t], w))
                 else:
@@ -272,8 +280,9 @@ get_batch_avgpilots = lambda x:(((len(set(x['sid'][0]['nodes']))
                                  / (x['end_time'] - x['start_time'])),
                                 x['end_time'] - x['start_time'])
 
-get_batch_avgw = lambda x:(((len(set(['{0}:{1}'.format(k, v)
-                                      for k,v in x['sid'][0]['nodes'].items()]))
+get_batch_avgw = lambda x:(((len(set(['{0}:{1}'.format(k, p)
+                                      for k,v in x['sid'][0]['nodes'].items()
+                                      for p in v]))
                                  * (x['sid'][0]['end_time']
                                     - x['sid'][0]['start_time']))
                                 / (x['end_time'] - x['start_time'])),
