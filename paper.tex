@@ -220,32 +220,36 @@ The title should also reflect this.
 
 \section{Materials and Methods}\label{sec:methods}
 
-    The application, templates, configuration files, benchmarks and analysis
-    scripts are publicly available and can be found at:
+    The application, templates, configuration files, benchmarks and
+    analysis scripts are publicly available and can be found in our Spark
+    Pilot-job scheduler for HPC Applications (SPA) software at:
     \href{https://github.com/big-data-lab-team/spa}{https://github.com/big-data-lab-team/spa}.
-    Links to the processing engines and processed data are provided in the text.
+    Links to the processing engines and processed data are provided in the
+    text.
     
     \subsection{Infrastructure}
     All experiments were conducted on the Cedar and B\'eluga HPC computing clusters
-    made available by Compute Canada. The Cedar cluster has a total of 1542 nodes
+    made available by Compute Canada through WestGrid and Calcul Qu\'ebec \TG{add links}. Both 
+    clusters are accessible through the Slurm batch scheduler and Lustre parallel file system.
+    The Cedar cluster has a total of 1542 nodes
     with a total of 58,416 CPU cores. Available memory on a Cedar node can range
     from 125 to 3022~G. Standard nodes are equipped with either 2x Intel E5-2683 v4
     Broadwell @ 2.1~Ghz (32 cores total) or 2x Intel Platinum 8160F Skylake @
     2.1Ghz (48 cores total) CPUs and 
-    2 x 480~G SSD. All nodes and temporary storage on Cedar is connected by an 
-    Intel OmniPath (version 1) interconnect with 100Gbit/s bandwidth.
+    2 x 480~G SSD. All nodes and temporary storage on Cedar are connected by an 
+    Intel OmniPath (version 1) with 100Gbit/s bandwidth.
 
     B\'eluga, on the other hand, is a smaller cluster with 872 available nodes. 
     Node memory can range between 92 to 752~G, with the most common node type having 
-    186G of available memory. All nodes contain a total of 2 x Intel Gold 6148
+    186G. All nodes contain 2 x Intel Gold 6148
     Skylake @ 2.4~Ghz (40 cores/node) CPU and are connected to each other with a
-    100~Gb/s Mellanox Infiniband EDR network. Each non-GPU node type contains one 
+    100~Gb/s Mellanox Infiniband EDR network \TG{expand EDR}. Each non-GPU node type contains one 
     480~G SSD. 
 
+    \subsection{Job Templates}
 
-    \subsection{Templates}
-
-    Two different templates were used for our experiments: the batch submission
+    Two different job templates were used to implement the two main
+    conditions compared in our experiments: the batch submission
     template and the pilot submission template. The batch submission template was
     inspired by the template provided by Compute Canada to launch Spark applications 
     on Slurm \href{https://docs.computecanada.ca/wiki/Apache\_Spark/en}{available here}.
@@ -255,28 +259,33 @@ The title should also reflect this.
     master is started on one of the requested node resources. Then, after the master
     has successfully started, the workers are started on all nodes. Multiple worker
     instances are started on a single node by setting the \textit{SPARK\_WORKER\_INSTANCES}
-    environment variable to the number of tasks per node. Each worker is given as many as 
-    many cores as specified by the user in the SLURM resource allocation request.
+    environment variable to the number of tasks per node. Each worker is given as many
+     cores as specified by the user in the Slurm resource allocation request.
     After both the masters and the workers have successfully started, the driver is finally
     started. The amount of memory given to each executor corresponds to 95\% of the 
     available memory on the node, to allow for offheap space. 
-    The deploy-mode selected for the batch template is client-mode. 
+    The Spark deploy-mode selected for the batch template is client-mode. 
 
     The pilot submission template is similar to that of the batch template, however,
-    each pilot will start its own Spark master and worker. However, only one pilot,
+    each pilot will start its own Spark master and worker. Only one pilot,
     the first pilot to attempt to launch the driver, will do so. The reason for 
     which each pilot starts its own master is to ensure the fault tolerance of the 
     masters. In this sort of configuration, should the active master be killed, one
     of the stand-by masters will takeover and the application will be able to 
     resume. Such a configuration is particularly favourable in pilot scheduling 
-    scenarios as node failures may be more frequent do to walltime expiration.
-    Additionally, the deploy mode of the driver was selected to be cluster deploy mode.
+    scenarios as node failures may be more frequent due to walltime expiration.
+    Additionally, the Spark deploy mode of the driver was selected to be cluster deploy mode.
     This would not only allow the driver to be executed directly on one of the workers,
-    but also allow us to make the driver fault-tolerant through the \textit{supervise} 
-    mode, which is only available in cluster deploy. As with the masters, it is
-    particularly important to have a fault-tolerant driver in pilot-scheduling scenarios due walltime
-    expiration. Should pilots be idle for a certain duration, the pilots will terminate
-    themselves such as to not hog resources.
+    but also allow us to make the driver fault-tolerant through the
+    \textit{supervise} mode, which is only available in cluster deploy
+    \TG{A brief section on Spark to explain these modes and features would
+    be useful}. As with the masters, it is particularly important to have a
+    fault-tolerant driver in pilot-scheduling scenarios due to possible
+    walltime expiration \TG{It should be explained before that one of the interests of pilots
+    is to ``play'' with shorter walltimes}. \TG{It would also be nice to have runs where pilots 
+    have shorter walltimes, to see if queuing times are shorter too.}
+    Should pilots be idle for a certain duration, the
+    pilots will terminate themselves such as to not hog resources.
     
     Due to the differences in deploy modes between batch and pilot submission, 
     batch will always inevitably have one more worker than pilot. This is because
@@ -305,7 +314,7 @@ The title should also reflect this.
                     \State read $chunk$                                        
                     \For{$i \in [1, n]$}                                                         
                         \State $chunk\gets chunk+1$                                              
-                        \State sleep $x$                                                         
+                        \State sleep $x$ \TG{Don't you sleep by x minus the duration of the previous step?}                                                        
                     \EndFor                                                                      
                     \State write $chunk$                                            
                 \EndFor                                                                      
@@ -315,9 +324,9 @@ The title should also reflect this.
     applications, we required a Spark application operating on a large dataset with
     an important processing time to emulate a what would be the average requirements
     of a scientific Spark application. For this, we created a synthetic application 
-    that would process the Big Brain~\cite{bigBrain}, a 76G 3D histological
+    that would process the Big Brain~\cite{bigBrain}, a 76~G 3D histological
     image of a human brain. The algorithm is a chain of map transformations that
-    at each transformation increment the voxels of the image by 1 (see Figure~\ref{alg:incrementation}.
+    at each transformation increment the voxels of the image by 1 (see Algorithm~\ref{alg:incrementation}).
     We chose such a synthetic algorithm
     as the focus of our experiments is pilot scheduling and not the application in
     itself. Furthermore, this algorithm enabled us to have control over the task duration
@@ -327,7 +336,7 @@ The title should also reflect this.
     level of parallelism allowed us to achieve this.
 
     Investigating the fault-tolerance provided by the overlay cluster is
-    crucial in determining the suitable of pilot scheduling with overlay clusters.
+    crucial in determining the suitability of pilot scheduling with overlay clusters.
     Fault-tolerance of the driver is only possible in cluster deploy mode, however,
     when using Spark's standalone scheduler, this mode is not available for Python 
     applications. It is for this reason that our synthetic application is written
@@ -339,10 +348,15 @@ The title should also reflect this.
     \todo{walltime parameter of workflow}
     \subsection{Model}
 
-    The makespan of an application can be defined as the total duration of the 
-    application including any scheduler queueing time. It can be defined by
-    the following expression:
-
+    The makespan of an application can be defined as the total duration
+    between the submission time of the first application task, and the
+    completion time of the last application time. It includes any
+    scheduling time, queueing time, data transfer time, and any other
+    overhead.
+    
+    Assuming a divisible load, i.e., the application can be divided in any
+    number of tasks, the makespan can be expressed using the following
+    expression, which holds for both batch and pilot execution modes:
     \begin{equation}
         M = \frac{C}{W} \label{eq:mcw}
     \end{equation}
@@ -350,19 +364,22 @@ The title should also reflect this.
     \begin{itemize}
         \item $M$ is the makespan of the application
         \item $C$ is the total CPU time of the application
-        \item $W$ is the average number of workers
+        \item $W$ is the average number of Spark workers throughout the execution
     \end{itemize}
-    
-    The average number of workers allows us to obtain a more accurate makespan
+    The average number of workers $W$ allows us to obtain a more accurate makespan
     figure as the average number of workers will decrease with increasing 
-    queuing times. Should the average number of workers equal the number of workers
-    requested, the application was not subjected to any scheduling queueing time. 
+    queuing times. It is computed as follows:
+    $$
+    W = \frac{1}{M}\int_0^M{w(t)dt},
+    $$
+    where $w(t)$ is the number of workers available at time $t$. When the
+    application is not subject to any scheduling or queuing time, the
+    average number of workers equal the number of workers requested. 
 
-    Furthermore, should the total CPU time of the application be fixed, the relation
+    Therefore, assuming a fixed total CPU time, the relation
     between batch and pilot jobs can be represented as:
-
     \begin{equation}
-        \frac{M_{batch}}{M_{pilot}} = f(\frac{W_{pilot}}{W_{batch}})\label{eq:makespancomp}
+        \frac{M_{batch}}{M_{pilot}} = \frac{W_{pilot}}{W_{batch}}\label{eq:makespancomp}
     \end{equation}
     where:
     \begin{itemize}
@@ -371,8 +388,12 @@ The title should also reflect this.
         \item $W_{pilot}$ is the average number of workers of the pilot application
         \item $W_{batch}$ is the average number of workers of the batch application
     \end{itemize}
+    We will use this relation to discuss our results later on. It
+    corresponds to an ideal case where no data or other overhead is
+    present: only queuing times are included.
 
-    \todo{perhaps expand a bit here}
+    \todo{perhaps expand a bit here \TG{I have a formal proof for eq (1) but I don't think
+    it's required here.}}
 
     \subsection{Added value of pilot scheduling}
         To determine if there are any performance benefits of using pilot over 
@@ -409,6 +430,11 @@ Configuration & RAM (GB) & Tasks \\
         \todo{incrementation with varying task durations}
 \section{Results}\label{sec:Results}
 \section{Discussion}\label{sec:discussion}
+
+SPA vs other frameworks.
+
+Technical overhead of using pilots + an overlay cluster over a cluster.
+
 \section{Conclusion}\label{sec:conclusion}
 
 \end{document}
