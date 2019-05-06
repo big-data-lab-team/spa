@@ -9,6 +9,16 @@
 \usepackage[bookmarks=false]{hyperref}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=blue,filecolor=black,urlcolor=blue}
+\usepackage{algorithm}
+\usepackage{algorithmicx} % Doc is at http://tug.ctan.org/macros/latex/contrib/algorithmicx/algorithmicx.pdf
+\usepackage{algpseudocode}
+\algnewcommand\algorithmicforeach{\textbf{for each}}
+\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
 
 \newcommand{\tristan}[1]{\color{red}\textbf{Note from Tristan}:
       #1 \color{black}}
@@ -209,19 +219,185 @@ The title should also reflect this.
 }
 
 \section{Materials and Methods}\label{sec:methods}
-    
-    In order to compare and contrast pilot over batch scheduling for scientific 
-    computing, we first created a synthetic application that would process the 
-    Big Brain~\cite{bigBrain}, a 76G 3D histological image of a human brain. The algorithm
-    is described in~\ref{Figure:incrementation}. This algorithm was selected as 
-    it would give us the flexibility to easily vary computing time as needed. 
-    
-    For the batch submission script, we reused the once recommended on the
-    compute canada wiki ~\cite{wiki}. 
 
+    The application, templates, configuration files, benchmarks and analysis
+    scripts are publicly available and can be found at:
+    \href{https://github.com/big-data-lab-team/spa}{https://github.com/big-data-lab-team/spa}.
+    Links to the processing engines and processed data are provided in the text.
+    
+    \subsection{Infrastructure}
+    All experiments were conducted on the Cedar and B\'eluga HPC computing clusters
+    made available by Compute Canada. The Cedar cluster has a total of 1542 nodes
+    with a total of 58,416 CPU cores. Available memory on a Cedar node can range
+    from 125 to 3022~G. Standard nodes are equipped with either 2x Intel E5-2683 v4
+    Broadwell @ 2.1~Ghz (32 cores total) or 2x Intel Platinum 8160F Skylake @
+    2.1Ghz (48 cores total) CPUs and 
+    2 x 480~G SSD. All nodes and temporary storage on Cedar is connected by an 
+    Intel OmniPath (version 1) interconnect with 100Gbit/s bandwidth.
+
+    B\'eluga, on the other hand, is a smaller cluster with 872 available nodes. 
+    Node memory can range between 92 to 752~G, with the most common node type having 
+    186G of available memory. All nodes contain a total of 2 x Intel Gold 6148
+    Skylake @ 2.4~Ghz (40 cores/node) CPU and are connected to each other with a
+    100~Gb/s Mellanox Infiniband EDR network. Each non-GPU node type contains one 
+    480~G SSD. 
+
+
+    \subsection{Templates}
+
+    Two different templates were used for our experiments: the batch submission
+    template and the pilot submission template. The batch submission template was
+    inspired by the template provided by Compute Canada to launch Spark applications 
+    on Slurm \href{https://docs.computecanada.ca/wiki/Apache\_Spark/en}{available here}.
+    The template operates as follows: Certain resource requirements are requested by
+    the user (e.g. walltime, amount of memory per node, number of CPUs per task, number 
+    of nodes and number of tasks per node). Once these resources are allocated, a 
+    master is started on one of the requested node resources. Then, after the master
+    has successfully started, the workers are started on all nodes. Multiple worker
+    instances are started on a single node by setting the \textit{SPARK\_WORKER\_INSTANCES}
+    environment variable to the number of tasks per node. Each worker is given as many as 
+    many cores as specified by the user in the SLURM resource allocation request.
+    After both the masters and the workers have successfully started, the driver is finally
+    started. The amount of memory given to each executor corresponds to 95\% of the 
+    available memory on the node, to allow for offheap space. 
+    The deploy-mode selected for the batch template is client-mode. 
+
+    The pilot submission template is similar to that of the batch template, however,
+    each pilot will start its own Spark master and worker. However, only one pilot,
+    the first pilot to attempt to launch the driver, will do so. The reason for 
+    which each pilot starts its own master is to ensure the fault tolerance of the 
+    masters. In this sort of configuration, should the active master be killed, one
+    of the stand-by masters will takeover and the application will be able to 
+    resume. Such a configuration is particularly favourable in pilot scheduling 
+    scenarios as node failures may be more frequent do to walltime expiration.
+    Additionally, the deploy mode of the driver was selected to be cluster deploy mode.
+    This would not only allow the driver to be executed directly on one of the workers,
+    but also allow us to make the driver fault-tolerant through the \textit{supervise} 
+    mode, which is only available in cluster deploy. As with the masters, it is
+    particularly important to have a fault-tolerant driver in pilot-scheduling scenarios due walltime
+    expiration. Should pilots be idle for a certain duration, the pilots will terminate
+    themselves such as to not hog resources.
+    
+    Due to the differences in deploy modes between batch and pilot submission, 
+    batch will always inevitably have one more worker than pilot. This is because
+    in cluster deploy, which pilot uses, the driver occupies a worker, whereas in
+    client deploy, the driver is separate from any worker.
+
+    Both of these Slurm templates are launched within a Python application called
+    \textit{SPA}. The templates are used in conjunction with JSON configuration 
+    file and passed to the SlurmPy~\cite{slurmpy} library within \textit{SPA}.
+    The \textit{SPA} application, all the while ensures that all is preconfigured
+    correctly before passing it to SlurmPy. It also ensures that enough pilots are
+    launched, maintains track of the running/queued pilots, and launches additional
+    pilots if there are less pilots than requested by the user in the Slurm queue.
+
+
+
+    \subsection{Application}
+        \begin{algorithm}\caption{Incrementation}\label{alg:incrementation}              
+            \begin{algorithmic}[1]                                                       
+                \Input                                                                       
+                    \Desc{$x$}{a sleep delay in seconds}                                         
+                    \Desc{$n$}{a number of iterations}                                           
+                    \Desc{$C$}{a set of image chunks}                                            
+                \EndInput                                                                    
+                \ForEach{$chunk \in C$}                                                      
+                    \State read $chunk$                                        
+                    \For{$i \in [1, n]$}                                                         
+                        \State $chunk\gets chunk+1$                                              
+                        \State sleep $x$                                                         
+                    \EndFor                                                                      
+                    \State write $chunk$                                            
+                \EndFor                                                                      
+            \end{algorithmic}                                                                
+        \end{algorithm}
+    To determine the added value of pilot scheduling over batch scheduling of Spark
+    applications, we required a Spark application operating on a large dataset with
+    an important processing time to emulate a what would be the average requirements
+    of a scientific Spark application. For this, we created a synthetic application 
+    that would process the Big Brain~\cite{bigBrain}, a 76G 3D histological
+    image of a human brain. The algorithm is a chain of map transformations that
+    at each transformation increment the voxels of the image by 1 (see Figure~\ref{alg:incrementation}.
+    We chose such a synthetic algorithm
+    as the focus of our experiments is pilot scheduling and not the application in
+    itself. Furthermore, this algorithm enabled us to have control over the task duration
+    which was representative of scientific applications. Additionally, it was important
+    that the overall application duration did not vary between the different levels of
+    parallelism within our experiments. Being able to adjust the task duration based on
+    level of parallelism allowed us to achieve this.
+
+    Investigating the fault-tolerance provided by the overlay cluster is
+    crucial in determining the suitable of pilot scheduling with overlay clusters.
+    Fault-tolerance of the driver is only possible in cluster deploy mode, however,
+    when using Spark's standalone scheduler, this mode is not available for Python 
+    applications. It is for this reason that our synthetic application is written
+    in Scala. Nevertheless, cluster deploy mode is possible for Python application
+    using YARN or Mesos schedulers.
+
+    
    
     \todo{walltime parameter of workflow}
+    \subsection{Model}
+
+    The makespan of an application can be defined as the total duration of the 
+    application including any scheduler queueing time. It can be defined by
+    the following expression:
+
+    \begin{equation}
+        M = \frac{C}{W} \label{eq:mcw}
+    \end{equation}
+    where:
+    \begin{itemize}
+        \item $M$ is the makespan of the application
+        \item $C$ is the total CPU time of the application
+        \item $W$ is the average number of workers
+    \end{itemize}
+    
+    The average number of workers allows us to obtain a more accurate makespan
+    figure as the average number of workers will decrease with increasing 
+    queuing times. Should the average number of workers equal the number of workers
+    requested, the application was not subjected to any scheduling queueing time. 
+
+    Furthermore, should the total CPU time of the application be fixed, the relation
+    between batch and pilot jobs can be represented as:
+
+    \begin{equation}
+        \frac{M_{batch}}{M_{pilot}} = f(\frac{W_{pilot}}{W_{batch}})\label{eq:makespancomp}
+    \end{equation}
+    where:
+    \begin{itemize}
+        \item $M_{batch}$ is the makespan of the batch application
+        \item $M_{pilot}$ is the makespan of the pilot application
+        \item $W_{pilot}$ is the average number of workers of the pilot application
+        \item $W_{batch}$ is the average number of workers of the batch application
+    \end{itemize}
+
+    \todo{perhaps expand a bit here}
+
     \subsection{Added value of pilot scheduling}
+        To determine if there are any performance benefits of using pilot over 
+        batch scheduling, we needed to compare both strategies given various resource
+        requirements. It is expected that large batch requests will stay in the 
+        resource queue longer than multiple pilot requests that ultimately use up
+        the same amount of resources as each individual pilot requests less resources at
+        a time. We therefore used four resource configurations to investigate this
+        hypothesis (Table~\ref{table:dedicatednodes}).
+
+        \begin{table}                                                                    
+\centering                                                                       
+\begin{tabular}{c|c|c}                                                             
+\rowcolor{headcolor}                                                             
+Configuration & RAM (GB) & Tasks \\                               
+\hline                                                                           
+1 & 112 & 16 \\                                               
+2 & 224 & 32 \\                                               
+3 & 336 & 48 \\
+4 & 448 & 64 \\
+\end{tabular}                                                                    
+\setlength{\belowcaptionskip}{-10pt}                                             
+\caption{Resource configurations}                                                    
+\label{table:dedicatednodes}                                                            
+\end{table} 
         \todo{execution of a batch cluster vs dynamic (pilot) cluster}
     \subsection{Robust masters}
         \todo{scala standalone vs our pyspark workaround. kill masters in experiments}
@@ -231,6 +407,7 @@ The title should also reflect this.
         \todo{need to kill idle workers. may not want all workers to be running at once.}
     \subsection{Example application}
         \todo{incrementation with varying task durations}
+\section{Results}\label{sec:Results}
 \section{Discussion}\label{sec:discussion}
 \section{Conclusion}\label{sec:conclusion}
 
