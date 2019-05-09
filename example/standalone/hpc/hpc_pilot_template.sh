@@ -26,6 +26,7 @@ term_handler()
 trap 'term_handler' TERM
 
 pilot_program(){
+	echo "Starting Master..."
 	$SPARK_HOME/sbin/start-master.sh
 	if [ ! -f $mstr_log ]; then
     		lockfile -r 0 $mstr_lock

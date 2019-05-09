@@ -187,6 +187,22 @@ def submit_sbatch(template, conf):
         write_bench_end(conf["benchmark"])
         write_bench_result(conf["benchmark"], result)
 
+def get_queued(jobs):
+
+    p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
+    (out, err) = p.communicate()
+    out = str(out, 'utf-8')
+    err = str(err, 'utf-8')
+    logging.debug("stdout: %s", out)
+    logging.debug("stderr: %s", err)
+
+    if 'send/recv' in out or 'send/recv' in err:
+        return ['']
+
+    running_jobs = out.split(os.linesep)[1:]
+    running_jobs = [l.strip().split(' ')[0] for l in running_jobs if l.strip().split(' ')[0] != '']
+    return running_jobs
+
 
 def submit_locally(template, conf):
 
@@ -288,13 +304,17 @@ def submit_pilots(template, conf):
 
         while not op.isfile(conf["COMPUTE"]["drvr_log"]):
             logging.warning("Driver log %s not created. Sleeping for 5 seconds",
-                         conf["COMPUTE"]["drvr_log"])
+                            conf["COMPUTE"]["drvr_log"])
+            if len(get_queued(jobs)) < 1:
+                break
             time.sleep(5)
 
-        while "http" not in driver_rest:
+        while "http" not in driver_rest and op.isfile(conf["COMPUTE"]["drvr_log"]):
             with open(conf["COMPUTE"]["drvr_log"], 'r') as f:
                 driver_rest = f.readline().strip(os.linesep)
                 logging.info('Driver URL at: %s', driver_rest)
+            if len(get_queued(jobs)) < 1:
+                break
             time.sleep(5)
 
         try:
@@ -308,6 +328,8 @@ def submit_pilots(template, conf):
         while (driver_api is not None and "driverState" in driver_api
                and driver_api["driverState"] == "SUBMITTED"):
             logging.warning('Driver in SUBMITTED state. Sleeping for 5 seconds')
+            if len(get_queued(jobs)) < 1:
+                break
             time.sleep(5)
 
             try:
@@ -322,19 +344,8 @@ def submit_pilots(template, conf):
         while (driver_api is not None and "driverState" in driver_api
                and driver_api["driverState"] == "RUNNING"):
             logging.info('Driver currently in RUNNING state')
-            p = Popen(["squeue", "-j", ",".join(jobs)], stdout=PIPE, stderr=PIPE)
-            (out, err) = p.communicate()
-            out = str(out, 'utf-8')
-            err = str(err, 'utf-8')
-            logging.debug("stdout: %s", out)
-            logging.debug("stderr: %s", err)
 
-            if 'send/recv' in out or 'send/recv' in err:
-                continue
-        
-            running_jobs = out.split(os.linesep)[1:]
-            running_jobs = [l.strip().split(' ')[0] for l in running_jobs if l.strip().split(' ')[0] != '']
-
+            running_jobs = get_queued(jobs)
             logging.info('Currently running jobs: %s', " ,".join(running_jobs))
             jobs = list(set(jobs).intersection(running_jobs))
 
