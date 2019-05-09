@@ -31,6 +31,17 @@ from copy import deepcopy
 import glob
 
 
+def query_api(url, retries=5):
+    for i in range(retries):
+        logging.info("Attempting to query Spark logs... Attempt #%d", i)
+        try:
+            return requests.get(url)
+        except Exception as e:
+            logging.error(str(e))
+            time.sleep(10)
+
+
+
 def write_bench_start(bench):
     with open(bench, 'a+') as f:
         f.write(",".join([os.linesep + datetime.now().isoformat(),
@@ -318,7 +329,7 @@ def submit_pilots(template, conf):
             time.sleep(5)
 
         try:
-            r = requests.get(driver_rest)
+            r = query_api(driver_rest)
             driver_api = r.json()
             logging.debug("Driver status: %s", driver_api)
             driver_id = driver_api["submissionId"]
@@ -333,7 +344,7 @@ def submit_pilots(template, conf):
             time.sleep(5)
 
             try:
-                r = requests.get(driver_rest)
+                r = query_api(driver_rest)
                 driver_api = r.json()
                 logging.debug(driver_api)
                 driver_id = driver_api["submissionId"]
@@ -360,7 +371,7 @@ def submit_pilots(template, conf):
             time.sleep(5 * 60)
 
             try:
-                r = requests.get(driver_rest)
+                r = query_api(driver_rest)
                 driver_api = r.json()
 
                 result = driver_api["driverState"]

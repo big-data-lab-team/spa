@@ -129,7 +129,7 @@ pilot_program(){
 			sleep 5
     		fi
 
-    		[ $elapsed_time -gt 120 ] && break
+    		[ $elapsed_time -gt 1000000 ] && break
 
 	done
 	$SPARK_HOME/sbin/stop-slave.sh

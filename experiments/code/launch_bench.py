@@ -89,7 +89,7 @@ def get_results(sp, tmp_file, launch, cond, out_dir):
 
 count = 0 
 while count < iterations :
-    if sys.argv[1] == "--no_interleave":
+    if len(sys.argv) > 1 and sys.argv[1] == "--no_interleave":
         print("running without interleaving")
         exps = experiments[2]
 
