@@ -5,3 +5,6 @@ paper.log
 paper.pdf
 experiments/code/*.int.cedar.computecanada.ca-bench.txt
 experiments/code/pilot*.log
+experiments/code/hs_err*
+experiments/code/core*
+experiments/code/*applogs*
