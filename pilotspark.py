@@ -331,7 +331,16 @@ def submit_pilots(template, conf):
         try:
             r = query_api(driver_rest)
             driver_api = r.json()
-            logging.debug("Driver status: %s", driver_api)
+            while driver_api is None or "submissionId" not in driver_api:
+                r = query_api(driver_rest)
+                driver_api = r.json()
+                logging.debug("Driver status: %s", driver_api)
+                time.sleep(5)
+
+                if len(get_queued(jobs)) < 1:
+                    break
+
+
             driver_id = driver_api["submissionId"]
         except Exception as e:
             logging.error(str(e))
@@ -346,7 +355,14 @@ def submit_pilots(template, conf):
             try:
                 r = query_api(driver_rest)
                 driver_api = r.json()
-                logging.debug(driver_api)
+                while driver_api is None or "submissionId" not in driver_api:
+                    r = query_api(driver_rest)
+                    driver_api = r.json()
+                    logging.debug(driver_api)
+
+                    if len(get_queued(jobs)) < 1:
+                        break
+
                 driver_id = driver_api["submissionId"]
             except Exception as e:
                 logging.error(str(e))
