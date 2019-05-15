@@ -43,6 +43,9 @@ with open(json_f, 'r') as f:
                 for line in f:
                     if "'submissionId': '" in line:
                         driver_name = line.split("'submissionId': '")[1].split("', ")[0]
+                    elif "GET /v1/submissions/status/" in line:
+                        driver_name = line.split("GET /v1/submissions/status/")[1].split(' ')[0]
+
             if driver_name is not None:
                 print(driver_name)
                 try:
