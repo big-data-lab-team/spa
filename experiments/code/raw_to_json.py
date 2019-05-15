@@ -30,7 +30,7 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
     log_files = glob.glob(op.join(fn, '*{}*.out'.format(exec_mode)))
 
     for f in sorted(log_files, key=lambda x: op.basename(x).split('-')[0]):
-        print(f)
+        print('logfile', f)
         with open(f, 'r') as logfile:
             sjids = []
             sjelems = []
@@ -47,8 +47,10 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                     worker_logdir = line.split(' ')[-1].strip(linesep)
                 elif "'submissionId': " in line:
                     driver_id = line.split("'submissionId': ")[1].split(',')[0].strip("'")
+                elif "GET /v1/submissions/status/" in line:
+                    driver_id = line.split("GET /v1/submissions/status/")[1].split(' ')[0]
 
-            if driver_id is not None:
+            if driver_id is not None and 'driver' in driver_id:
                 driver_path = op.join(worker_logdir, driver_id)
                 #driver_path = op.join('sworker_logs', driver_id)
 
@@ -60,7 +62,7 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                 nodes, success, job_start = get_jobid_success(sj, s_logs)
                 sj_elem['nodes'] = nodes
 
-                if success or driver_id is None:
+                if success or driver_path is None:
                     sj_elem['succeeded'] = success
                     sj_elem['job_start'] = job_start
                 else:
@@ -90,7 +92,6 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
 def get_success(fp, node):
     success = False
     job_start = None
-    print(fp)
     if op.isdir(fp) and node is not None:
         with open(op.join(fp, 'stderr'), 'r') as f:
             for line in f:
