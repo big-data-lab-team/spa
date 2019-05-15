@@ -29,194 +29,120 @@
 \definecolor{headcolor}{gray}{0.9}
 
 \begin{document}
-\title{Evaluation of dynamic resource allocation strategies for overlay Apache
-       Spark clusters on HPC \tristan{``Overlay'' and ``Apache Spark'' are redundant}}
+\title{Evaluation of pilot jobs for Apache Spark\\ applications on HPC clusters}
 \author{
     \IEEEauthorblockN{
-        Val\'erie Hayot-Sasson and Tristan Glatard
+        Val\'erie Hayot-Sasson and Tristan Glatard \\
+        Department of Computer Science and Software Engineering, Concordia University, Montreal, Canada
     }
     \IEEEauthorblockA{}
 }
 \maketitle
 
 \begin{abstract}
-    Big Data has become prominent throughout many scientific fields and, as a
-    result, scientific communities have sought out Big Data frameworks to 
-    accelerate the processing of their increasingly data-intensive pipelines.
-    \TG{I'd write the previous sentence in continuous present tense, since I think
-    this is an on-going process.}
-    However, while scientific communities typically rely on High-Performance 
-    Computing (HPC) clusters for the parallelization of their pipelines, many 
-    popular Big Data frameworks such as Hadoop and Spark were primarily designed
-    to be executed on dedicated commodity infrastructures. Differences found between
-    these infrastructures and the policies that surround them limit the advantages
-    of deploying Big Data pipelines on HPC infrastructure. For instance, HPC
-    clusters typically employ a batch job submission system requiring users to
-    specify details on number of cores, nodes, amount of memory and duration.
-    Big Data engines, such as Spark, have no built-in mechanism to interact with
-    HPC batch job submission systems. Morever, the details required by the HPC
-    schedulers \TG{be more specific than ``details'': do you mean ``scheduling policies'',
-    ``application resource requirerments?''
-    } are not necessarily initially known to users of Big Data frameworks.
-    \TG{The previous paragraph is a bit long: it could be summarized to 2-3
-    sentences.}
-
-    Pilot scheduling strategies have been developed to address the limitations 
-    of traditional HPC batch job schedulers \TG{You could give examples of pilot schedulers as you did with Spark and Hadoop}.
-    Pilot schedulers decouple resource
-    provisioning from task scheduling, thereby enabling efficient resource
-    utilization through dynamic scheduling. This paper evaluates the benefits 
-    pilot-scheduling strategies over traditional batch submission
-    on HPC clusters with overlay Apache Spark clusters. We first evaluate the
-    overall speedup brought on by employing pilot-scheduling strategies. We then
-    examine the robustness to master and driver failures, which may be frequent 
-    when underestimating pilot walltime. Spark built-in checkpointing is also 
-    investigated in relation to pilot expiration.
-
-    Our results show that\ldots TBD.
+    Big Data has become prominent throughout many scientific fields and, as
+    a result, scientific communities have sought out Big Data frameworks to
+    accelerate the processing of their increasingly data-intensive
+    pipelines. However, while scientific communities typically rely on
+    High-Performance Computing (HPC) clusters for the parallelization of
+    their pipelines, many popular Big Data frameworks such as Hadoop and
+    Apache Spark were primarily designed to be executed on dedicated
+    commodity infrastructures. This paper evaluates the benefits of pilot
+    jobs over traditional batch submission on HPC clusters with overlay
+    Apache Spark clusters. We first evaluate the overall speedup brought on
+    by employing pilot jobs. We then examine the robustness to master and
+    driver failures, which may be frequent when underestimating pilot
+    walltime. Spark built-in checkpointing is also investigated in relation
+    to pilot expiration. Surprisingly, our results show that the speed-up
+    provided by pilot jobs over batch scheduling remains moderate (\TG{X} on
+    average) despite the presence of long queuing times. In addition, pilot
+    jobs provide an extra layer of scheduling that complexifies debugging
+    and deployment. We conclude that traditional batch scheduling should
+    remain the default strategies to deploy Apache Spark applications on
+    HPC clusters.
 \end{abstract}
 
 \section{Introduction}
 
-With the increasing volume of data being collected and shared, Big Data has become
-an important area of focus to many scientific domains. As is the case with neuroimaging,
-datasets available publicly now reach up to Petabytes in size~\cite{UKBiobank, hcp}. Average workstations found in research labs would not be
-able to support the processing of such large datasets, leaving researchers to look 
-into cloud or High-Performance Computing~(HPC) solutions. Whereas both options are
-suitable for the processing of scientific Big Data, HPC clusters remain the more 
-sought after solution, potentially due to their cost-effectiveness.
+Pilot jobs, also known as dynamic resource provisioning or glide-in
+scheduling, are a widely-used technique to address infrastructure
+heterogeneity, variable task queuing times, fine task granularity, and node
+failures on distributed computing infrastructures~\cite{jakubsmodel}. Made popular by software
+projects such as Condor~\cite{thain2005distributed} and DIRAC~\cite{casajus2010dirac}, they
+became critical to grid computing, greatly improved the performance of HPC
+clusters, and enabled multi-cloud executions. 
 
-Scientific workflows may be quite compute intensive, requiring more than a few
-hours to complete (\cite{freesurfer, fmriprep, a paper which mentions duration}).
-The coupling of large datasets with compute-intensive workflows may result in 
-unreasonably long processing times, which restricts the amount of data 
-utilized in scientific experiments. To reduce the effects of Big Data on processing
-times, researchers have begun to move towards employing Big Data frameworks for their
-analyses, such as Hadoop MapReduce~\cite{Hadoop},
-Apache Spark~\cite{Spark} and Dask~\cite{Dask}. However, these frameworks were 
-designed with dedicated commodity infrastructure in mind, and, with the exception
-of Dask, do not support traditional HPC schedulers.
+In contrast to static resource provisioning, pilot jobs are submitted to
+the infrastructure separately from the application, to provision resources
+on which application tasks will eventually be scheduled. Large pools of
+resources can thus be created, shielding applications from the underlying
+queuing times, failures, and other idiosyncracies. A variety of frameworks
+now rely on pilot jobs, including RADICAL-Pilot~\cite{merzky2015radical},
+and recent versions of the Pipeline System for Octave and Matlab
+(PSOM)~\cite{bellec2012pipeline}. The survey in~\cite{turilli2018comprehensive} reviews
+the current pilot-job systems.
 
-Within HPC clusters, many users share resources to process a variety of different
-applications. These shared resources include storage (e.g. parallel file system) and 
-compute node resources (memory, CPU, local disk space, etc.). In order for users to 
-gain access to shared compute resources, HPC clusters typically employ schedulers for 
-batch resource provisioning. Examples of such schedulers include PBS, SGE, Slurm and 
-TORQUE~\cite{schedulers}. These schedulers require that the user specify the amount
-of resources required and the duration that they require the resources for. The users 
-are then placed in a queue at a position based on the user's priority and resource 
-availability.
+% Goal of the paper
+In this paper, we study the use of pilot jobs to deploy Apache
+Spark~\cite{zaharia2016apache} applications on shared HPC clusters. The method
+currently recommended for this purpose involves batch requesting all the
+necessary resources and launching a standalone Spark cluster once the
+resources have been allocated. This is for instance the method used in
+Compute Canada (see details \href{https://docs.computecanada.ca/wiki/Apache_Spark/en}{here}),
+ our national computing infrastructure. With pilot
+jobs, rather than requesting all the resources at once, a Spark cluster is
+launched with a subset of the resources and is expanded as more resources
+get allocated. Consistently with previous examples of pilot job
+deployments, we hypothesize that this strategy would reduce queuing times
+by (1) fragmenting resource requirements, and (2) allowing shorter walltime
+estimates. While there have been some efforts on implementing pilot jobs
+for Apache Spark~\cite{jha-spark-pbs}, research is limited and
+none of the them detail their quantitative effect.
 
-There are several limitations to running applications on batch HPC schedulers, 
-particularly in the face of Big Data. For instance, users may not necessarily 
-know the exact requirements of the applications. With applications that are 
-both data- and compute-intensive, this may result in the user overestimating the
-resources required and the duration that these resources are required for. Frequent
-high overestimates may create bottlenecks in the system, preventing other users
-from occupying allocated idle resources. In contrast, users may underestimate required 
-resources, leading the batch scheduler to kill applications due to exceeded resource quotas.
-This may subsequently result in many failures within the application leading to
-additional re-executions of the same application. This is problematic for the user
-as their priority may be affected by the cluster usage. Additionally, the user may 
-require more time on the cluster to relaunch non-checkpointed and interrupted 
-tasks. \uwave{Furthermore, Big Data frameworks, such as Apache Spark, do not interact naturally
-with HPC schedulers and typically rely on other schedulers for resource provisioning
-and task scheduling. Therefore, to run Big Data applications on HPC schedulers, 
-it is also necessary to start an overlay cluster.} \tristan{The previous 2 sentences are a bit unclear. You should explain
-what an overlay cluster means here. ``Interact with other schedulers'' is vague. This point should end up explaining
-what static resource provisioning means for Spark, i.e., the Compute Canada approach. It might even be a separate paragraph.
-You could merge here the paragraph that currently explains that later.}
-
-
-In contrast to static resource provisioning, as is the case with batch HPC schedulers, 
-dynamic resource provisioning, known as pilot job or glide-in scheduling, exists. 
-Dynamic resource provisioning allows the user to specify a minimum and maximum 
-amount of resources, and the cluster can expand and contract depending on application requirements.
-\tristan{Add one sentence to define what's a pilot}. 
-Each pilot may consist of the minimal amount of resources required to launch the 
-application. As each pilot would request allocation of fewer resources than that of a batch
-request, Pilot Jobs would typically spend less time on the resource allocation 
-queue. Furthermore, although individual pilots may expire due to walltimes, the dynamic
-nature of pilots allows the entire application to surpass walltime limitations, as
-additional pilots may be added to the pilot queue until application completion. 
-Examples of HPC schedulers employing pilot strategies include HTCondor~\cite{htcondor}
-and DIRAC~\cite{DIRAC}. \todo{maybe mention PSOM and Pegasus here \tristan{Yes for PSOM as it's neuroimaging. Pegasus
-only uses pilots through condor afaik.}}
-
-\tristan{I think this could be the 3rd paragraph.} Apache Spark is a popular Big Data framework, commonly used in both industrial
-and academic settings. Although it is a Scala-based framework, it also has APIs
-for Java, Python (PySpark) and R. Spark's Resilient Distributed Dataset (RDD) abstraction enabled
-in-memory processing of pipelines by co-locating tasks and data, which provided important performance improvements compared to its predecessors.
- Through the use of RDDs, it also became possible to execute iterative 
-workflows -- something not easily doable in older frameworks such as Hadoop MapReduce.
-Schedulers for Spark include its built-in standalone schedule, Yet Another Resource Negotiator (YARN),
-and Mesos~\cite{yarn, mesos}. \tristan{You could cite Ariel's and your paper to say that Spark is sometimes useful in 
-neuroimaging on a cluster.}
+Apache Spark is a popular Big Data framework, commonly used in both
+industrial and academic settings. Although it is a Scala-based framework,
+it also has APIs for Java, Python (PySpark) and R. Spark's Resilient
+Distributed Dataset (RDD) abstraction enabled in-memory processing of
+pipelines by co-locating tasks and data, which provided important
+performance improvements compared to its predecessor Hadoop
+MapReduce~\cite{dean2008mapreduce}. Through the use of RDDs, it also became possible
+to execute iterative workflows -- something not easily doable in older
+frameworks. Schedulers for Spark include its built-in standalone schedule,
+Yet Another Resource Negotiator (YARN~\cite{apache13yet}), and Mesos~\cite{hindman2011mesos}. As a
+result of the sustained increase in data volumes, Apache Spark and other
+Big Data engines are increasingly used for scientific applications,
+including in neuroimaging, our primary field of
+interest~\cite{boubela2016big,mehta2017comparative,maybethesimulationone,freeman2014mapping}.
 
 
-Projects such as Thunder~\cite{thunder}, a PySpark-compatible library 
-of image processing tools, have been developed in various fields 
-although they are still not widely adopted, possibly due to the 
-difficulties in adapting Big Data frameworks on HPC \todo{better 
-explain the difficulties...setting walltimes etc. also explain 
-neuroimaging 
-applications}. In addition, Spark has been used in 
-various research projects to process neuroimaging data \cite{Boubela, 
-ariel's paper, maybe the simulation one}. \tristan{in this paragraph you could refer
-to your pre-print for more information.} \tristan{I would summarize that in 1 or 2 sentences at the end of the previous
-paragraph.}
+Big Data frameworks were designed with dedicated commodity infrastructure
+in mind, and, with the exception of Dask~\cite{rocklin2015dask}, do not support batch
+HPC schedulers such as PBS, SGE, Slurm and TORQUE~\cite{schedulers}, which
+are commonly available to scientists. Therefore, to run Big Data
+applications on HPC schedulers, it is also necessary to start an overlay
+cluster that will schedule application tasks on resources provisioned
+through batch schedulers. Our experiments quantify the effect of pilot jobs
+when combined with such an overlay cluster. Our evaluation will be broken
+down into two parts:
+1) the added value of pilots, and 2), tolerance to failures.
 
-The recommended method for launching Spark applications on HPC schedulers 
-involves batch requesting all the necessary resources and launching a standalone
-Spark cluster once the resources have been requested \TG{Add link to Compute Canada's instructions?}. This could significantly increase
-the scheduling time of Spark-based applications as a large amount of resources 
-may be necessary to process Big Data. In a pilot-scheduling model, rather than requesting all the resources 
-at once, a Spark cluster is launched with a subset of the resources and is expanded as 
-more resources get allocated. This, in turn, may reduce the overall processing of
-an application as less resources are requested at once and are therefore more likely
-to be scheduled faster.
-
-Pilot scheduling techniques have already been applied to scientific workflow engines, such as
-Pegasus, PSOM and RADICAL-Pilot~\cite{}. While there have been some efforts on
-implementing pilot scheduling approaches for Apache Spark\cite{jha and spark on pbs paper},
-research is limited and none of the them detail the effects of an overlay cluster
-on overall performance and robustness. 
-\tristan{This paragraph should write the scientific question of your paper more clearly: is it useful to 
-use a pilot job framework to run Spark workflows on HPC? Also, this comes a bit late in the intro, it would be good
-to precise the question early on, and the explain it in length as you do.}
-
-In this paper, we will analyse the effects of pilot scheduling strategies with an 
-overlay Spark cluster. Our evaluation will be broken down into two parts: 1)
-the added value of pilots, and 2), tolerance to failures. For determining the 
-added value of pilots, we will investigate the effect of queuing times on 
-pilot applications as compared to a batch requests. As much of the application's
-tolerance to failures are features brought on by the overlay Spark cluster, in
-Part 2 we will introduce failures that would be typical to pilot scheduling 
-approaches (e.g. node failures due to walltime expiration). This part will be 
-broken down into master failures, driver failures and checkpointing. As pilots 
-may need to be replenished during execution, we will also consider the effects of 
-job queues \todo{reword}.
-
-\tristan{Your text now mentions points 3 and 4 below, but doesn't talk about 1 and 2 and the fact that
-an overlay cluster already deals with that. Something that wasn't mentioned in my initial list was that pilot jobs
-also reduce the number of tasks seen by the cluster (this is also addressed by an overlay scheduler). It would be interesting
-to explain that many of the interests of pilot jobs are already addressed by overlay scheduling, hence the question whether
-pilot jobs are useful at all in this context.}
-\TG{The introduction is still very much geared toward the presentation of 
-the SPA software. Instead, I think it should introduce the question whether pilot jobs
-are useful at all to overlay schedulers, explain why they may be, and why they may not (there is already an overlay scheduler,
-and resource heterogeneity is limited). You could explain that the traditional benefits of pilot-job systems are:
+To summarize, our paper
+makes the following contributions:
 \begin{itemize}
-    \item Address worker node heterogeneity
-    \item Address worker node failures (software, incl walltime expirations, or hardware)
-    \item Address variable queuing times
-    \item Tolerant to resource requirement overestimation, in particular walltime and CPU
-    \item Increase workload distribution (use more nodes)
+\item We present a lightweight pilot-job framework to run Apache Spark
+applications on HPC clusters.
+\item We compare the makespan of a typical neuroimaging Big Data
+application with and without pilot jobs on two different HPC clusters and
+in different conditions.
+\item We describe a simple performance model to validate that the observed
+differences come from variations in queuing times rather than other
+factors.
 \end{itemize}
-Among these, (1) and to some extent (2) are already addressed by an overlay scheduler.
-
-The title should also reflect this.
-}
+Our methods, including infrastructure, job templates, application and
+performance model are described in Section~\ref{sec:methods}.
+Section~\ref{sec:results} presents our results which are discussed in
+Section~\ref{sec:discussion}. Section~\ref{sec:conclusion} concludes on the 
+relevant of pilot jobs for Apache Spark applications on HPC clusters.
 
 \section{Materials and Methods}\label{sec:methods}
 
@@ -324,7 +250,7 @@ The title should also reflect this.
     applications, we required a Spark application operating on a large dataset with
     an important processing time to emulate a what would be the average requirements
     of a scientific Spark application. For this, we created a synthetic application 
-    that would process the Big Brain~\cite{bigBrain}, a 76~G 3D histological
+    that would process the Big Brain~\cite{amunts2013bigbrain}, a 76~G 3D histological
     image of a human brain. The algorithm is a chain of map transformations that
     at each transformation increment the voxels of the image by 1 (see Algorithm~\ref{alg:incrementation}).
     We chose such a synthetic algorithm
@@ -537,7 +463,7 @@ The title should also reflect this.
         \todo{need to kill idle workers. may not want all workers to be running at once.}
     \subsection{Example application}
         \todo{incrementation with varying task durations}
-\section{Results}\label{sec:Results}
+\section{Results}\label{sec:results}
 \section{Discussion}\label{sec:discussion}
 
 SPA vs other frameworks.
@@ -546,4 +472,11 @@ Technical overhead of using pilots + an overlay cluster over a cluster.
 
 \section{Conclusion}\label{sec:conclusion}
 
+\section*{Acknowledgement}
+
+We warmly thank Compute Canada and its regional centers WestGrid and Calcul
+Qu\'ebec for providing the infrastructure used in our experiments.
+
+\bibliographystyle{IEEEtran} 
+\bibliography{biblio}
 \end{document}
