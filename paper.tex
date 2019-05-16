@@ -29,6 +29,7 @@
 \definecolor{headcolor}{gray}{0.9}
 
 \begin{document}
+
 \title{Evaluation of pilot jobs for Apache Spark\\ applications on HPC clusters}
 \author{
     \IEEEauthorblockN{
@@ -60,6 +61,7 @@
     and deployment. We conclude that traditional batch scheduling should
     remain the default strategies to deploy Apache Spark applications on
     HPC clusters.
+
 \end{abstract}
 
 \section{Introduction}
@@ -295,9 +297,9 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     The average number of workers $W$ allows us to obtain a more accurate makespan
     figure as the average number of workers will decrease with increasing 
     queuing times. It is computed as follows:
-    $$
-    W = \frac{1}{M}\int_0^M{w(t)dt},
-    $$
+    \begin{equation}
+        W = \frac{1}{M}\int_0^M{w(t)dt}\label{eq:avgw}
+    \end{equation}
     where $w(t)$ is the number of workers available at time $t$. When the
     application is not subject to any scheduling or queuing time, the
     average number of workers equal the number of workers requested. 
@@ -440,6 +442,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
        both Cedar and B\'eluga to determine how much our results differ between
        two distinct clusters.
 
+    % maybe remove
     \subsection{Pipeline robustness}
         While nodes failures can occur for various reasons, underestimation of 
         walltime may lead to early node termination in pilot scheduling systems.
@@ -457,18 +460,243 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
         
 
         \todo{scala standalone vs our pyspark workaround. kill masters in experiments}
-    \subsection{Checkpointing}
+    % maybe remove\subsection{Checkpointing}
         \todo{metric for determining how often to checkpoint based on cluster size}
-    \subsection{Job arrays}
+    % maybe remove \subsection{Job arrays}
         \todo{need to kill idle workers. may not want all workers to be running at once.}
-    \subsection{Example application}
+    % maybe remove \subsection{Example application}
         \todo{incrementation with varying task durations}
+
 \section{Results}\label{sec:results}
+
+As can be seen in both figures~\ref{fig:makespansbeluga} and ~\ref{fig:makespanscedar}, pilots 
+generally did not bring any performance improvement to the execution of Spark workloads
+on Beluga and Cedar. In Beluga (Figure~\ref{fig:beluga1}), 16 pilots were always 
+slower than batch except for repetitions 4 and 12. The maximum speedup achieved
+was approximately 1.3~x for 8 pilots and 1.1~x for 16 pilots. In Figures~\ref{fig:beluga2}
+and ~\ref{fig:beluga3}, it is also the case that batch is generally faster than
+pilots for the majority of the cases, except a couple, in which the speedup brought
+by use of pilots is very limited. It is only in Configuration~4 (Figure~\ref{fig:beluga4})
+that we see a maximum speedup of 2.8, however, it generally remains that pilots are slower.
+
+The Cedar cluster (Figure~\ref{fig:makespanscedar}) also follows the same trend that
+the makespan of batch scheduled applications are generally faster than that of pilots,
+with a maximum speedup of 3, found both in Configuration~1 and 4. Moreover, in 
+Cedar, it was less clear whether to use 8 or 16 pilots as speedup between the two
+varies between the iterations. In general, both pilot configurations performed the
+same.
+
+In order to determine whether queueing time was the cause of the difference 
+in makespans between batch and pilots, we compared makespan with queuing time of 
+first pilot. As can be seen in Figure~\ref{fig:mqcedar}, variations in overall
+makespans is primiarily due to queueing time.
+
+In the case of pilots, multiple Slurm jobs, each with potentially different queuing times,
+are used. Figure~\ref{fig:mwall} displays the makespan times for an average number of workers
+given an experiment configuration, where the line corresponds to the estimated makespan using 
+our model. Makespan for the model was calculated as:
+$$
+M = (\lceil 125/W \rceil\times d) + 20,
+$$
+where:
+\begin{itemize}
+    \item $M$ is the makespan of the application
+    \item $W$ is the average number of Spark workers throughout the execution
+    \item $d$ is the task delay associated with a given configuration
+    \item $20$ is the average measured incrementation duration for a BigBrain chunk
+\end{itemize}
+As can be seen in the figure, although pilots and batch had similar makespans
+for a given number of average workers, pilots were consistently slower than batch
+for the same number of workers. Both batch and pilots were consistent with the 
+model, however. In general, both pilots and batch had the same number of average
+workers.
+
+    \begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_1_beluga}
+            \caption[]%
+            {{\small Configuration 1}}
+            \label{fig:beluga1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_2_beluga}
+            \caption[]%
+            {{\small Configuration 2}}
+            \label{fig:beluga2}
+        \end{subfigure}
+        \vskip\baselineskip
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_3_beluga}
+            \caption[]%
+            {{\small Configuration 3}}
+            \label{fig:beluga3}
+        \end{subfigure}
+        \quad
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_4_beluga}
+            \caption[]%
+            {{\small Configuration 4}}
+            \label{fig:beluga4}
+        \end{subfigure}
+        \caption[]
+        {\small The application makespan on the Beluga cluster for all repetitions.}
+        \label{fig:makespansbeluga}
+    \end{figure*}
+
+
+    \begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_1_cedar}
+            \caption[]%
+            {{\small Configuration 1}}
+            \label{fig:cedar1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_2_cedar}
+            \caption[]%
+            {{\small Configuration 2}}
+            \label{fig:cedar2}
+        \end{subfigure}
+        \vskip\baselineskip
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_3_cedar}
+            \caption[]%
+            {{\small Configuration 3}}
+            \label{fig:cedar3}
+        \end{subfigure}
+        \quad
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_4_cedar}
+            \caption[]%
+            {{\small Configuration 4}}
+            \label{fig:cedar4}
+        \end{subfigure}
+        \caption[]
+        {\small The application makespan on the Cedar cluster for all repetitions.}
+        \label{fig:makespanscedar}
+    \end{figure*}
+
+      \begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/dedicated_4_cedar}
+            \caption[]%
+            {{\small Makespan}}
+            \label{fig:makespancedar}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/pq_4_cedar}
+            \caption[]%
+            {{\small Queuing time}}
+            \label{fig:queuecedar}
+        \end{subfigure}
+        \caption[]
+        {\small Side-by-side comparison of total makespan and queueuing time of
+        first pilots or batch application for Configuration 4 running on Cedar}
+        \label{fig:mqcedar}
+    \end{figure*}
+
+
+    \begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/mw_beluga}
+            \caption[]%
+            {{\small Beluga}}
+            \label{fig:mwbeluga}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/mw_cedar}
+            \caption[]%
+            {{\small Cedar}}
+            \label{fig:mwcedar}
+        \end{subfigure}
+        \caption[]
+        {\small The relation between makespan and average number of workers as 
+        calculated using Equation~\ref{eq:avgw}. Trendline denotes the expected makespan
+        given the average number of workers given a certain configuration}
+        \label{fig:mwall}
+    \end{figure*}
+
 \section{Discussion}\label{sec:discussion}
 
-SPA vs other frameworks.
+%SPA vs other frameworks.
 
-Technical overhead of using pilots + an overlay cluster over a cluster.
+%Technical overhead of using pilots + an overlay cluster over a cluster.
+Pilots do not appear to provide any performance advantage over batch scheduling.
+This can be due to a few reasons. The queuing time for batch and pilots were similar, 
+which can be an indication that the required resources to run the batch requests were
+available, and our priority on the cluster was what affected the queuing time. This may, in turn,
+explain why batch was sometimes significantly slower than pilots -- queueing time was not
+only controlled by priority, but also by available resources.
+
+It was also found that having 16 pilots was generally slower than 8 for the same
+configuration. This was particularly the case on Beluga. We suspect this might be
+related to the number of Slurm jobs permitted for a user on the backfill queue. For
+all configurations, we ran batch, 8 pilots and 16 pilots concurrently. This would have
+resulted in 25 Slurm jobs trying the access the queue concurrently. On Beluga, this
+feature is configured to a total of 10 jobs. For 16 nodes, this would at best be
+only 62.5\% of the pilots being scheduled at a given time if all resources are available.
+The next 6 jobs would then have to wait 3 minutes before having an opportunity to enter the
+backfill. Cedar, on the other hand, permits 40 user jobs to be backfilled at a given time.
+Therefore, on Cedar, all concurrent Slurm jobs had an opportunity to be backfilled at
+the same time, which may explain why this behaviour is more apparent on B\'eluga. Furthermore,
+while both pilot configurations could be places in B\'eluga's low memory nodes, batch requests
+had to be place on B\'eluga's medium memory nodes. B\'eluga has 172 low memory nodes and
+516 mid memory nodes. As pilots would get priority for the low memory nodes first and 
+low memory nodes are less frequent that medium memory nodes, it is possible that this
+may have increased the overall queuing times of the pilots. However, Cedar's basic
+node has enough memory to for all batch and pilot configuration, therefore, this could not
+have affected queuing time for Cedar.
+
+Although queuing time is largely responsible for makespan variations, it is not
+always entirely responsible for the difference. Sometimes there are errors related
+to workers not registering properly with the master. These occurences lead to the 
+pipeline being processed entirely with a smaller number of available workers. As the task
+delay added considers the maximum amount of parallel workers, functioning with less total workers
+will significantly affect makespan. However, as seen in Figure~\ref{fig:mwall}
+pilots are slower even with the same amount of average workers. A potential reasoning for this
+may be the, worker registration delay and the time required to transfer data
+over after the application has already started. In batch scheduling, all workers a started in
+parallel and the data is transferred automatically at the beginning of the pipeline as the maximum amount
+of parallelism is available at driver start time. Pilots, on the other hand, may start workers in parallel,
+but not necessarily all will be started at the same time. This means that the entire 
+workflow may suffer the impacts of starting workers in sequence. Moreover, there would also
+be a delay with respect to transferring data from workers to newly added workers. Therefore,
+it is only natural that pilots would have a bit more overhead that batch given the same
+queuing time should pilots not all commence at once. Furthermore, the pilot scripts also
+have some starter overhead as the all start a master, a worker (registered to the main
+master) and attempt to start a driver. Batch need only start a single master and attempts to start
+a driver only once.
+
+The motivation to use pilots, however, is dynamic scheduling on HPC clusters. While we
+investigated the queuing time differences with respect to differences in available resources,
+the walltimes were kept static. Had walltime been underestimated to the point where the Slurm jobs
+would terminate prior to application completion, pilots would have been preferable to batch
+as batch scheduling has no mechanism to restart. Even if such a mechanism was in place, the entire
+cluster would be shutdown and need to restart, which has additional overheads. With pilots, as long as 
+there was at least one pilot alive, it would be possible to maintain the cluster and add additional pilots.
+Spark provides built-it fault-tolerance for not only the workers, but the master and driver as well.
+
+
 
 \section{Conclusion}\label{sec:conclusion}
 
