@@ -3,6 +3,7 @@
 import argparse
 from os import listdir, path as op, linesep
 from time import strptime
+from datetime import datetime as dt
 import json
 import glob
 
@@ -29,7 +30,7 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
     log_files = glob.glob(op.join(fn, '*{}*.out'.format(exec_mode)))
 
     for f in sorted(log_files, key=lambda x: op.basename(x).split('-')[0]):
-        print(f)
+        print('logfile', f)
         with open(f, 'r') as logfile:
             sjids = []
             sjelems = []
@@ -46,23 +47,28 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
                     worker_logdir = line.split(' ')[-1].strip(linesep)
                 elif "'submissionId': " in line:
                     driver_id = line.split("'submissionId': ")[1].split(',')[0].strip("'")
+                elif "GET /v1/submissions/status/" in line:
+                    driver_id = line.split("GET /v1/submissions/status/")[1].split(' ')[0]
 
-            if driver_id is not None:
+            if driver_id is not None and 'driver' in driver_id:
                 driver_path = op.join(worker_logdir, driver_id)
+                #driver_path = op.join('sworker_logs', driver_id)
 
             for sj in sjids:
                 sj_elem = {}
                 sj_elem['id'] = sj
                 sj_elem['start_time'] = None
                 sj_elem['end_time'] = None
-                nodes, success = get_jobid_success(sj, s_logs)
+                nodes, success, job_start = get_jobid_success(sj, s_logs)
                 sj_elem['nodes'] = nodes
 
-                if success or driver_id is None:
+                if success or driver_path is None:
                     sj_elem['succeeded'] = success
+                    sj_elem['job_start'] = job_start
                 else:
-                    success = get_success(driver_path, list(nodes.keys())[0] if len(nodes) > 0 else None)
+                    success, job_start = get_success(driver_path, list(nodes.keys())[0] if len(nodes) > 0 else None)
                     sj_elem['succeeded'] = success
+                    sj_elem['job_start'] = job_start
 
                 sjelems.append(sj_elem)
 
@@ -85,12 +91,16 @@ def get_jobs(fn, sj_benchmark_dir, s_logs, exec_mode):
 
 def get_success(fp, node):
     success = False
+    job_start = None
     if op.isdir(fp) and node is not None:
         with open(op.join(fp, 'stderr'), 'r') as f:
             for line in f:
                 if 'Finished task' in line and '125/125' in line:
                     success = True
-    return success
+                elif 'Starting job: collect at IncrementApp.scala' in line:
+                    job_start = dt.timestamp(dt.strptime(linesep.join(line.split(' ')[:2]), "%y/%m/%d %H:%M:%S"))
+
+    return success, job_start
 
 
 def order_pilots(directory, sjids, exec_mode="batch"):
@@ -180,6 +190,7 @@ def get_jobid_success(job_id, master_logs):
     logfile = glob.glob(op.join(op.abspath(master_logs), '*.{}.out'.format(job_id)))
     batch = False
     executors = {}
+    job_start = None
 
     if len(logfile) > 0:
         if 'batch' in logfile[0]:
@@ -216,15 +227,18 @@ def get_jobid_success(job_id, master_logs):
                         executors[node].add(proc)
                     else:
                         executors[node] = set([proc])
+                elif batch and 'Starting job: collect at IncrementApp.scala' in line:
+                    job_start = dt.timestamp(dt.strptime(linesep.join(line.split(' ')[:2]), "%y/%m/%d %H:%M:%S"))
 
                 elif batch and 'Finished task' in line and '125/125' in line:
                     for k in executors.keys():
                         executors[k] = list(executors[k])
 
-                    return executors, True
+                    return executors, True, job_start
+
     for k in executors.keys():
         executors[k] = list(executors[k])
-    return executors, False
+    return executors, False, None
 
 
 def main():

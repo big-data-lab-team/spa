@@ -26,6 +26,7 @@ term_handler()
 trap 'term_handler' TERM
 
 pilot_program(){
+	echo "Starting Master..."
 	$SPARK_HOME/sbin/start-master.sh
 	if [ ! -f $mstr_log ]; then
     		lockfile -r 0 $mstr_lock
@@ -83,9 +84,11 @@ pilot_program(){
 			app_log_dir=${SLURM_JOBID}-applogs
 			mkdir $app_log_dir
 
-			eval $driver_prog > output 2>&1
-			cat output
-			driverid=`cat output | grep submissionId | grep -Po 'driver-\d+-\d+'`
+			out_file=output-$SLURM_JOBID
+
+			eval $driver_prog > $out_file 2>&1
+			cat $out_file
+			driverid=`cat $out_file | grep submissionId | grep -Po 'driver-\d+-\d+'`
 			echo 'Spark driver ID: ' $driverid
 
 			DRIVER_REST=${MASTER_URI/spark/http}
@@ -93,6 +96,7 @@ pilot_program(){
 			echo 'REST API Url: ' $DRIVER_REST
 			curl $DRIVER_REST
 			echo $DRIVER_REST > $drvr_log
+			rm $out_file
     		fi
 	fi
 
@@ -128,7 +132,7 @@ pilot_program(){
 			sleep 5
     		fi
 
-    		[ $elapsed_time -gt 120 ] && break
+    		[ $elapsed_time -gt 1000000 ] && break
 
 	done
 	$SPARK_HOME/sbin/stop-slave.sh
