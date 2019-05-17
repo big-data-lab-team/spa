@@ -180,6 +180,33 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     \TG{A sub-section could be added here to describe the main features of Spark used:
     client mode, cluster mode, master selection, supervise mode, etc}
 
+    \section{Spark Configuration}
+    Spark has many configuration options available for dynamic resource provisioning.
+    Its standalone cluster provides two deployment modes: client and cluster. The client
+    deploy mode executes the driver within the \texttt{spark-submit} process as
+    a client to the cluster. The cluster deploy-mode, however, runs the driver within
+    a worker process. Such a configuration is practical when the driver program
+    is deployed on a machine not co-located in the cluster to reduce network 
+    latency between workers and driver. The cluster deploy mode also has the texttt{supervise}
+    feature which provides fault-tolerance to the driver. This is particularly useful for
+    pilot-based overlay clusters where the running driver may fail to walltime expiration.
+    Cluster deploy mode is not available for python applications using the standalone mode.
+
+    With HPC clusters, client mode is not necessarily possible on the login node as the
+    driver client may require more resources than permitted. Moreover, due to cluster
+    security policies, it may not be possible, or difficult to execute the driver from
+    an external computer, such as a personal laptop. Therefore, for both batch and pilot
+    scheduling, it is necessary to launch the driver from within the Slurm jobs.
+
+    Spark also provides master fault tolerance through single-node recovery, where a shared
+    filesystem is available. To enable this, a recovery folder must be set. Should the master
+    fail, a new master will be able to takeover based on the information available in the recovery
+    folder. Although we start a master on each pilot, we have not incorporated this recovery function
+    for our experiments. This feature is, however, important and should be incorporated in pilot schedulers
+    were any nodes can fail by design.
+
+    %%maybe add checkpointing
+
     \subsection{Job Templates}
 
     Two different job templates were used to implement the two main
@@ -461,17 +488,12 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
         it fault-tolerant to failures. However, using this feature coupled with the 
         \texttt{--supervise} flag, will. 
 
-
-
-        
-
-        \todo{scala standalone vs our pyspark workaround. kill masters in experiments}
     % maybe remove\subsection{Checkpointing}
-        \todo{metric for determining how often to checkpoint based on cluster size}
+    %    \todo{metric for determining how often to checkpoint based on cluster size}
     % maybe remove \subsection{Job arrays}
-        \todo{need to kill idle workers. may not want all workers to be running at once.}
+    %    \todo{need to kill idle workers. may not want all workers to be running at once.}
     % maybe remove \subsection{Example application}
-        \todo{incrementation with varying task durations}
+    %    \todo{incrementation with varying task durations}
 
 \section{Results}\label{sec:results}
 
@@ -485,42 +507,6 @@ pilots for the majority of the cases, except a couple, in which the speedup brou
 by use of pilots is very limited. It is only in Configuration~4 (Figure~\ref{fig:beluga4})
 that we see a maximum speedup of 2.8, however, it generally remains that pilots are slower. \TG{could you report the 
 average speed-up of pilots?}
-
-The Cedar cluster (Figure~\ref{fig:makespanscedar}) also follows the same trend that
-the makespan of batch scheduled applications are generally faster than that of pilots,
-with a maximum speedup of 3, found both in Configuration~1 and 4. Moreover, in 
-Cedar, it was less clear whether to use 8 or 16 pilots as speedup between the two
-varies between the iterations. In general, both pilot configurations performed the
-same.
-
-In order to determine whether queueing time was the cause of the difference 
-in makespans between batch and pilots, we compared makespan with queuing time of 
-first pilot. As can be seen in Figure~\ref{fig:mqcedar}, variations in overall
-makespans is primiarily due to queueing time.
-
-In the case of pilots, multiple Slurm jobs, each with potentially different queuing times,
-are used. Figure~\ref{fig:mwall} displays the makespan times for an average number of workers
-given an experiment configuration, where the line corresponds to the estimated makespan using 
-our model. Makespan for the model was calculated as:
-$$
-M = (\lceil 125/W \rceil\times d) + 20,
-$$
-where:
-\begin{itemize}
-    \item $M$ is the makespan of the application
-    \item $W$ is the average number of Spark workers throughout the execution
-    \item $d$ is the task delay associated with a given configuration
-    \item $20$ is the average measured incrementation duration for a BigBrain chunk
-\end{itemize}
-\TG{You should remove the $\lceil . \righceil$ as it is not part of the model and I'm not sure
-if it works with pilots. Also, if you're using numbers you should report their units (seconds here, for 20 and the makespan).
-It's unclear where 125 comes from. And why isn't it $\frac{125(d+20)}{W}$?}
-As can be seen in the figure, although pilots and batch had similar makespans
-for a given number of average workers, pilots were consistently slower than batch
-for the same number of workers. Both batch and pilots were consistent with the 
-model, however \TG{there is a contradiction here: if both batch and pilots were consistent with the model, then
-they should have similar makespans.}. In general, both pilots and batch had the same number of average
-workers. \TG{You could also plot the difference in the number of workers, for each experiment.}
 
     \begin{figure*}
         \centering
@@ -560,6 +546,12 @@ workers. \TG{You could also plot the difference in the number of workers, for ea
         \label{fig:makespansbeluga}
     \end{figure*}
 
+The Cedar cluster (Figure~\ref{fig:makespanscedar}) also follows the same trend that
+the makespan of batch scheduled applications are generally faster than that of pilots,
+with a maximum speedup of 3, found both in Configuration~1 and 4. Moreover, in 
+Cedar, it was less clear whether to use 8 or 16 pilots as speedup between the two
+varies between the iterations. In general, both pilot configurations performed the
+same.
 
     \begin{figure*}
         \centering
@@ -599,6 +591,11 @@ workers. \TG{You could also plot the difference in the number of workers, for ea
         \label{fig:makespanscedar}
     \end{figure*}
 
+In order to determine whether queueing time was the cause of the difference 
+in makespans between batch and pilots, we compared makespan with queuing time of 
+first pilot. As can be seen in Figure~\ref{fig:mqcedar}, variations in overall
+makespans is primiarily due to queueing time.
+
       \begin{figure*}
         \centering
         \begin{subfigure}[b]{0.475\textwidth}
@@ -621,6 +618,33 @@ workers. \TG{You could also plot the difference in the number of workers, for ea
         first pilots or batch application for Configuration 4 running on Cedar}
         \label{fig:mqcedar}
     \end{figure*}
+
+In the case of pilots, multiple Slurm jobs, each with potentially different queuing times,
+are used. Figure~\ref{fig:mwall} displays the makespan times for an average number of workers
+given an experiment configuration, where the line corresponds to the estimated makespan using 
+our model. Makespan for the model was calculated as:
+$$
+M = \frac{125\times(d + 20)}{W}\times 10,
+$$
+where:
+\begin{itemize}
+    \item $125$ is the number of chunks BigBrain was split into
+    \item $M$ is the makespan of the application
+    \item $W$ is the average number of Spark workers throughout the execution
+    \item $d$ is the task delay associated with a given configuration
+    \item $20$ is the average measured incrementation duration, in seconds, for a BigBrain chunk
+    \item $10$ is the number of iterations
+\end{itemize}
+As can be seen in the figure, although pilots and batch had similar makespans
+for a given number of average workers, pilots were consistently slower than batch
+for the same number of workers. Both batch and pilots were consistent with the 
+model, however \TG{there is a contradiction here: if both batch and pilots were consistent with the model, then
+they should have similar makespans.}. In general, both pilots and batch had the same number of average
+workers. \TG{You could also plot the difference in the number of workers, for each experiment.}
+
+
+
+
 
 
     \begin{figure*}
@@ -693,10 +717,10 @@ of parallelism is available at driver start time. Pilots, on the other hand, may
 but not necessarily all will be started at the same time. This means that the entire 
 workflow may suffer the impacts of starting workers in sequence \TG{isn't it queuing time again?}. Moreover, there would also
 be a delay with respect to transferring data from workers to newly added workers. Therefore,
-it is only natural that pilots would have a bit more overhead that batch given the same
+it is only natural that pilots would have a bit more overhead than batch given the same
 queuing time should pilots not all commence at once \TG{ok, but isn't the total amount of transfered data the same in both conditions?}.
  Furthermore, the pilot scripts also
-have some starter overhead as the all \TG{?} start a master, a worker (registered to the main
+have some startup overhead as all pilots start a master, a worker (registered to the main
 master) and attempt to start a driver. Batch needs only start a single master and attempts to start
 a driver only once.
 
