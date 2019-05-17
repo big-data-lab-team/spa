@@ -7,5 +7,5 @@ python experiments/notebooks/generate_figures.py experiments/data/json/cedar_bat
 
 # Beluga
 
-python experiments/notebooks/generate_figures.py experiments/data/json/batch_total_dedicated_beluga_nt.json experiments/data/json/pilots8_total_dedicated_beluga_nt.json experiments/data/json/pilots16_total_dedicated_beluga_nt.json beluga
+python experiments/notebooks/generate_figures.py experiments/data/json/beluga_batch_may17.json experiments/data/json/beluga_pilots8_may17.json experiments/data/json/beluga_pilots16_may17.json beluga
 
