@@ -109,9 +109,49 @@ def repetition_fig(data, n_dedicated, system="Beluga", save=None, ylim=None):
     if ylim is not None:
         ax.set_ylim(0, ylim)
     elif system == "beluga":
-        ax.set_ylim(0, 15000)
+        ax.set_ylim(0, 28000)
     else:
-        ax.set_ylim(0, 15000) # 60000
+        ax.set_ylim(0, 28000) # 60000
+
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels((i + 1 for i in range(n_groups)))
+    ax.legend()
+    
+    if save is None:
+        ax.set_title('{0} - {1} dedicated'.format(system, n_dedicated))
+        plt.show()
+    else:
+        plt.savefig(save)
+
+
+def nworkers_fig(data, n_dedicated, system="Beluga", save=None, ylim=None):
+    n_groups = len(data['batch'])
+    print(n_groups)
+
+    fig, ax = plt.subplots()
+
+    index = np.arange(n_groups)
+    bar_width = 0.30
+    opacity = 0.4
+
+    pilot8_diff = [elem - data['8pilots'][i] for i,elem in enumerate(data['batch']) if elem != 0 or data['8pilots'][i] != 0]
+    pilot16_diff = [elem - data['16pilots'][i] for i,elem in enumerate(data['batch']) if elem != 0 or data['16pilots'][i] != 0]
+    rects2 = ax.bar(index, pilot8_diff, bar_width,
+                    alpha=opacity, color='b', label='batch - 8 pilots')
+
+    rects3 = ax.bar(index + bar_width, pilot16_diff, bar_width,
+                    alpha=opacity, color='green', label='batch - 16 pilots')
+
+
+    ax.set_xlabel('Repetition')
+    ax.set_ylabel('Average number of worker difference (Batch - Pilot)')
+
+    if ylim is not None:
+        ax.set_ylim(0, ylim)
+    elif system == "beluga":
+        ax.set_ylim(-60, 50)
+    else:
+        ax.set_ylim(-60, 50) # 60000
 
     ax.set_xticks(index + bar_width / 2)
     ax.set_xticklabels((i + 1 for i in range(n_groups)))
@@ -200,8 +240,8 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
     lgnd.extend([d1_symbol, d2_symbol, d3_symbol, d4_symbol])
     ax.legend(handles=lgnd)
     
-    get_c = lambda x, y, z=False: (10*(x+20)*125)/y if z else 10*(x+20)*np.ceil(125/y)
-    ceil_results = False
+    get_c = lambda x, y, z=False : (10*(x+20)*125)/y if z else 10*(x+20)*np.ceil(125/y)
+    ceil_results = True
     n_workers = np.arange(5, 70)
     
     a = 0.2
@@ -402,15 +442,23 @@ get_batch_avgw = lambda x:(((len(set(['{0}:{1}'.format(k, p)
                                x['end_time'] - x['start_time'])
 
 m = lambda x,y : [el['end_time'] - el['start_time']
-               for el in x if el['success']
-               and y in el['name'] and el['end_time'] is not None]
+                  if el['success']
+                  and el['end_time'] is not None
+                  else 0
+                  for el in x
+                  if y in el['name']]
+
 w_batch = lambda y :[get_batch_avgw(el)[0]
-                    for el in batch if el['success']
-                    and y in el['name'] and el['end_time'] is not None]
+                     if el['success']
+                     and el['end_time'] is not None
+                     else 0
+                     for el in batch
+                     if y in el['name']]
 w_pilot = lambda x,y: [get_pilot_avgw(el, el)[0]
-                      for el in x
-                      if el['success'] and el['end_time'] is not None
-                      and y in el['name']]
+                       if el['success'] and el['end_time'] is not None
+                       else 0
+                       for el in x
+                       if y in el['name']]
 
 def get_m_w(mode):
     if mode == 'batch':
@@ -423,6 +471,12 @@ def get_m_w(mode):
         return [(w_pilot(pilots16, n), m(pilots16, n)) for n in ['1d', '2d',
                                                                  '3d', '4d']]
 
+def average_speed_up(dedicated_dict, pilots=8):
+    pilots = "{}pilots".format(pilots)
+    return mean([elem / dedicated_dict[pilots][i]
+                 for i, elem in enumerate(dedicated_dict['batch'])
+                 if elem > 0 and dedicated_dict[pilots][i] > 0])
+
 
 
 def main():
@@ -433,7 +487,7 @@ def main():
 
     system = sys.argv[4]
 
-    assert(len(batch)==len(pilots8)==len(pilots16))
+    assert(len(batch)==len(pilots8)==len(pilots16)), len(batch)
 
     global dedicated_1, dedicated_2, dedicated_3, dedicated_4
 
@@ -469,6 +523,30 @@ def main():
     pilots16mw_1d, pilots16mw_2d, pilots16mw_3d, pilots16mw_4d = tuple(get_m_w("16p"))
 
     print(get_batch_avgw(batch[6])[0], batchmw_4d)
+    print(len(batchmw_1d[0]), len(pilots8mw_1d[0]), len(pilots16mw_1d[0]))
+
+    nworkers_fig({'batch': batchmw_1d[0], '8pilots': pilots8mw_1d[0],
+                  '16pilots': pilots16mw_1d[0] }, 1, system=system,
+                 save="figures/nworkers_1_{}.pdf".format(system))
+    nworkers_fig({'batch': batchmw_2d[0], '8pilots': pilots8mw_2d[0],
+                  '16pilots': pilots16mw_2d[0] }, 1, system=system,
+                 save="figures/nworkers_2_{}.pdf".format(system))
+    nworkers_fig({'batch': batchmw_3d[0], '8pilots': pilots8mw_3d[0],
+                  '16pilots': pilots16mw_3d[0] }, 1, system=system,
+                 save="figures/nworkers_3_{}.pdf".format(system))
+    nworkers_fig({'batch': batchmw_4d[0], '8pilots': pilots8mw_4d[0],
+                  '16pilots': pilots16mw_4d[0] }, 1, system=system,
+                 save="figures/nworkers_4_{}.pdf".format(system))
+
+    print("{} average speedup:".format(system))
+    print("8pilots 1 dedicated", average_speed_up(dedicated_1, 8))
+    print("8pilots 2 dedicated", average_speed_up(dedicated_2, 8))
+    print("8pilots 3 dedicated", average_speed_up(dedicated_3, 8))
+    print("8pilots 4 dedicated", average_speed_up(dedicated_4, 8))
+    print("16pilots 1 dedicated", average_speed_up(dedicated_1, 16))
+    print("16pilots 2 dedicated", average_speed_up(dedicated_2, 16))
+    print("16pilots 3 dedicated", average_speed_up(dedicated_3, 16))
+    print("16pilots 4 dedicated", average_speed_up(dedicated_4, 16))
 
     #data = get_pilot_info(pilots8[1], 'nodes', True)
     #print(pilots8[1]["name"], data)
