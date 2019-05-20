@@ -523,17 +523,17 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
        two distinct clusters.
 
     % maybe remove
-    \subsection{Pipeline robustness}
-        While nodes failures can occur for various reasons, underestimation of 
-        walltime may lead to early node termination in pilot scheduling systems.
-        Therefore, it is crucial for the overlay cluster within the pilot system
-        to be robust to node failures. In this series of experiments, we investigate
-        Spark's fault-tolerance with respect to worker, master and driver termination.
+    %\subsection{Pipeline robustness}
+    %    While nodes failures can occur for various reasons, underestimation of 
+    %    walltime may lead to early node termination in pilot scheduling systems.
+    %    Therefore, it is crucial for the overlay cluster within the pilot system
+    %    to be robust to node failures. In this series of experiments, we investigate
+    %    Spark's fault-tolerance with respect to worker, master and driver termination.
 
-        In our configuration, the driver is running in cluster deploy-mode, resulting
-        in it being executed directly on a worker. This feature alone should not make
-        it fault-tolerant to failures. However, using this feature coupled with the 
-        \texttt{--supervise} flag, will. 
+    %   In our configuration, the driver is running in cluster deploy-mode, resulting
+    %    in it being executed directly on a worker. This feature alone should not make
+    %    it fault-tolerant to failures. However, using this feature coupled with the 
+    %    \texttt{--supervise} flag, will. 
 
     % maybe remove\subsection{Checkpointing}
     %    \todo{metric for determining how often to checkpoint based on cluster size}
@@ -812,8 +812,8 @@ have affected queuing time for Cedar.
 
 Although queuing time is largely responsible for makespan variations, it is not
 always entirely responsible for the difference. Sometimes there are errors related
-to workers not registering properly with the master. These occurrences lead to the 
-application being processed entirely with a smaller number of available workers. As the task
+to executors not properly starting. These occurrences lead to the 
+application being processed entirely with a smaller number of available executors. As the task
 delay added considers the maximum amount of parallel workers, functioning with less total workers
 will significantly affect makespan. However, as seen in Figure~\ref{fig:mwall}
 pilots are slower even with the same amount of average workers. A potential reasoning for this
@@ -821,11 +821,12 @@ may be the worker registration delay and the time required to transfer data
 over after the application has already started. In batch scheduling, all workers are started in
 parallel and the data is transferred automatically at the beginning of the pipeline as the maximum amount
 of parallelism is available at driver start time. Pilots, on the other hand, may start workers in parallel,
-but not necessarily all will be started at the same time. This means that the entire 
-workflow may suffer the impacts of starting workers in sequence \TG{isn't it queuing time again?}. Moreover, there would also
+but not necessarily all will be started at the same time (i.e. delays in starting the workers once resources
+have been allocated). This means that the entire 
+workflow may suffer the impacts of starting workers in sequence rather than in parallel. Moreover, there would also
 be a delay with respect to transferring data from workers to newly added workers. Therefore,
 it is only natural that pilots would have a bit more overhead than batch given the same
-queuing time should pilots not all commence at once \TG{ok, but isn't the total amount of transfered data the same in both conditions?}.
+queuing time should pilots not all commence at once, despite transferring the same amount of data.
  Furthermore, the pilot scripts also
 have some startup overhead as all pilots start a master, a worker (registered to the main
 master) and attempt to start a driver. Batch needs only start a single master and attempts to start
@@ -838,16 +839,57 @@ would terminate prior to application completion, pilots might have been preferab
 as batch scheduling has no mechanism to restart. Even if such a mechanism was in place, the entire
 cluster would be shutdown and need to restart, which has additional overheads. With pilots, as long as 
 there was at least one pilot alive, it would be possible to maintain the cluster and add additional pilots.
-Spark provides built-it fault-tolerance for not only the workers, but the master and driver as well.
+Spark provides built-it fault-tolerance for not only the workers, but the master and driver as well. However,
+it is also likely that with faster queuing times, all resources would be allocated at the same time. If walltime
+were to be underestimated, in this case, checkpointing and restarting the entire application from the last
+checkpoint would be the only option. This too has limitations as the last checkpoint may not be recent, requiring
+necessitating significant recomputation. It
+might even be desirable to have many small resource requests in such a scenario, as with an increase in pilots,
+it becomes less likely for all of them to be scheduled at once, as can be seen with 16 pilots. This would allow
+for more chances for the application to reach completiong without failing entirely.
 
-\tristan{Comment on the difficulties introduce by adding another layer in an already complex system:
-HPC + Spark. It complexifies debugging.}
+Many failures can be found, particularly with regards to the pilots. Many of these have been
+a result of Spark failing to start properly. The driver either would not return a submission ID after
+being started, or would remain in \texttt{SUBMITTED} status until the walltime expiration, having 
+not processed any data. As these error become fewer with increased resources, it is possible they are
+entirely related to lack of resources. Furthermore, it may also explain why batch submission always passes.
+Not only are all the workers that were requested available when the pilot begins running, batch has one extra
+executor available thanks to the driver process running directly on the process which had created it, rather than
+a worker process. Conversely, it is not only the pilot applications that fail, the batch applications
+do experience some failures as well. It can be seen in Figure~\ref{fig:makespansbeluga} that the batch application failed
+twice: once in Configuration~2 and the other in Configuration~4. In both cases, the reason for failure was the same: lack of
+available resources despite all executors having been assigned. These failures might be due to running on a cluster. Either
+the resources were down, or other users might have been using them, resulting in the resources being unavailable to our application.
+
+Running a Spark cluster atop of a Slurm allocation complexifies debugging, particularly if the application runs in cluster mode.
+Spark worker logs, unless saved to network storage, are unavailable. Saving them to network storage also effectively slows down
+the application as it is a slower storage than RAM and local disk. As a result, the Spark worker UI is also inaccessible. When running
+in client mode, the driver output ends up it standard output/error. However, in cluster mode, the driver output is found stored within
+the worker logs, which means the driver logs are also inaccessible without worker logs being written to network storage. Some HPC clusters
+may have a file limit for user, meaning that the user must be sure that these logs coupled without other stored data does not exceed the file
+limit.  
 
 \TG{You could end the discussion by a comment on the current literature on pilot jobs. How are your results
 consistent or not with the literature?}
 
 
 \section{Conclusion}\label{sec:conclusion}
+Pilots do not provide significant advantage over batch systems using the same amount of resources. This is affected
+by the overhead of dynamically adjusting the cluster size and the fact that queuing time of the batch applications took
+as long as the pilots. These results, however, are to an extent cluster-dependent. It is expected that as the number
+of resources requested increases, the speedup provided by pilots will increase. Furthermore, users executing on a smaller cluster 
+may experience greater speedups using the same resource configuration. 
+
+Pilots are meant to allow for underestimation of resources, particularly walltime, which would not
+be known to the user prior to execution. In its current state, \texttt{SPA} is not able to 
+evaluate that functionality. Further experiments on master fault-tolerance, driver recovery, and checkpointing
+will need to be conducted to determine if pilot jobs are even a viable solution for Spark applications running on 
+HPC.
+
+Currently, as client mode is not available in Spark Standalone clusters for PySpark applications,
+using pilots on HPC would be limited to non-Python applications until there is a solution for 
+Standalone mode.
+
 
 \section*{Acknowledgement}
 
