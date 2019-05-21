@@ -227,7 +227,7 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
         lgnd = [ pilot8_symbol, pilot16_symbol ]
 
     model_symbol = mlines.Line2D([], [], color="gray", alpha=0.5, linestyle='-',
-                              label='Batch model, non divisible load')
+                              label='Batch model, non DL')
     batch_symbol = mlines.Line2D([], [], color="black", alpha=0.5, marker='o', linestyle='None',
                                  label=execution_mode)
     d1_symbol = mlines.Line2D([], [], color="purple", alpha=0.5, linestyle='-',
@@ -570,20 +570,22 @@ def main():
             if elem != 0 and data[1][i] != 0:
                 w.append(elem)
                 m.append(data[1][i])
-        data = (w, m)
+        return (w, m)
 
-    keep_successful(batchmw_1d) 
-    keep_successful(batchmw_2d) 
-    keep_successful(batchmw_3d) 
-    keep_successful(batchmw_4d) 
-    keep_successful(pilots8mw_1d) 
-    keep_successful(pilots8mw_2d) 
-    keep_successful(pilots8mw_3d) 
-    keep_successful(pilots8mw_4d) 
-    keep_successful(pilots16mw_1d) 
-    keep_successful(pilots16mw_2d) 
-    keep_successful(pilots16mw_3d) 
-    keep_successful(pilots16mw_4d) 
+    batchmw_1d = keep_successful(batchmw_1d) 
+    batchmw_2d = keep_successful(batchmw_2d) 
+    batchmw_3d = keep_successful(batchmw_3d) 
+    batchmw_4d = keep_successful(batchmw_4d) 
+    pilots8mw_1d = keep_successful(pilots8mw_1d) 
+    pilots8mw_2d = keep_successful(pilots8mw_2d) 
+    pilots8mw_3d = keep_successful(pilots8mw_3d) 
+    pilots8mw_4d = keep_successful(pilots8mw_4d) 
+    pilots16mw_1d = keep_successful(pilots16mw_1d) 
+    pilots16mw_2d = keep_successful(pilots16mw_2d) 
+    pilots16mw_3d = keep_successful(pilots16mw_3d) 
+    pilots16mw_4d = keep_successful(pilots16mw_4d) 
+
+    print(pilots8mw_1d)
 
     basic_model(batchmw_1d + pilots8mw_1d,
                 batchmw_2d + pilots8mw_2d,
