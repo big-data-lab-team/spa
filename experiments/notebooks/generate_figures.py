@@ -197,6 +197,7 @@ def makespan_box(d1, d2, d3, d4, num_pilots, system="Beluga", save=None):
 def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga", save=None):   
     fig, ax = plt.subplots()
     execution_mode = "Batch" if type(num_pilots) == str and "batch" in num_pilots else "Pilots" 
+    
     ax.scatter(xy1[0], xy1[1], c="#6600cc", alpha=0.5, label="{} 1 dedicated".format(execution_mode))                                                  
     ax.scatter(xy2[0], xy2[1], c="#ff0000", alpha=0.5, label="{} 2 dedicated".format(execution_mode))
     ax.scatter(xy3[0], xy3[1], c="#ffa500", alpha=0.5, label="{} 3 dedicated".format(execution_mode))
@@ -225,6 +226,8 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
                                      label='16 Pilots')
         lgnd = [ pilot8_symbol, pilot16_symbol ]
 
+    model_symbol = mlines.Line2D([], [], color="gray", alpha=0.5, linestyle='-',
+                              label='Batch model, non divisible load')
     batch_symbol = mlines.Line2D([], [], color="black", alpha=0.5, marker='o', linestyle='None',
                                  label=execution_mode)
     d1_symbol = mlines.Line2D([], [], color="purple", alpha=0.5, linestyle='-',
@@ -237,7 +240,7 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
                               label='Configuration 4')
 
     lgnd.insert(0, batch_symbol)
-    lgnd.extend([d1_symbol, d2_symbol, d3_symbol, d4_symbol])
+    lgnd.extend([model_symbol, d1_symbol, d2_symbol, d3_symbol, d4_symbol])
     ax.legend(handles=lgnd)
     
     get_c = lambda x, y, z=False : (10*(x+20)*125)/y if z else 10*(x+20)*np.ceil(125/y)
@@ -249,7 +252,13 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
     ax.plot(n_workers, get_c(90, n_workers, ceil_results), '-', c='red', alpha=a)
     ax.plot(n_workers, get_c(120, n_workers, ceil_results), '-', c='orange', alpha=a)
     ax.plot(n_workers, get_c(180, n_workers, ceil_results), '-', c='green', alpha=a)
-    
+
+    # gray line
+    ax.plot(n_workers, get_c(45, n_workers, False),'-', c='gray', alpha=a)
+    ax.plot(n_workers, get_c(90, n_workers, False), '-', c='gray', alpha=a)
+    ax.plot(n_workers, get_c(120, n_workers, False), '-', c='gray', alpha=a)
+    ax.plot(n_workers, get_c(180, n_workers, False), '-', c='gray', alpha=a)
+
     ax.set_xlabel(xlabel)                                                        
     ax.set_ylabel(ylabel)                                                        
     ax.set_ylim(0, 14000)#(0,61000)
@@ -518,6 +527,7 @@ def main():
     repetition_fig(dedicated_4, 4, system=system,
                   save="figures/dedicated_4_{}.pdf".format(system))
 
+    print(dedicated_1['batch'][7])
     batchmw_1d, batchmw_2d, batchmw_3d, batchmw_4d = tuple(get_m_w("batch"))
     pilots8mw_1d, pilots8mw_2d, pilots8mw_3d, pilots8mw_4d = tuple(get_m_w("8p"))
     pilots16mw_1d, pilots16mw_2d, pilots16mw_3d, pilots16mw_4d = tuple(get_m_w("16p"))
@@ -551,6 +561,29 @@ def main():
     #data = get_pilot_info(pilots8[1], 'nodes', True)
     #print(pilots8[1]["name"], data)
     #print(sum([data[i][1]*(data[i + 1][0] - data[i][0]) for i in range(len(data) - 1)]) / ( data[-1][0] - data[0][0] ))
+
+
+    def keep_successful(data):
+        w = []
+        m = []
+        for i, elem in enumerate(data[0]):
+            if elem != 0 and data[1][i] != 0:
+                w.append(elem)
+                m.append(data[1][i])
+        data = (w, m)
+
+    keep_successful(batchmw_1d) 
+    keep_successful(batchmw_2d) 
+    keep_successful(batchmw_3d) 
+    keep_successful(batchmw_4d) 
+    keep_successful(pilots8mw_1d) 
+    keep_successful(pilots8mw_2d) 
+    keep_successful(pilots8mw_3d) 
+    keep_successful(pilots8mw_4d) 
+    keep_successful(pilots16mw_1d) 
+    keep_successful(pilots16mw_2d) 
+    keep_successful(pilots16mw_3d) 
+    keep_successful(pilots16mw_4d) 
 
     basic_model(batchmw_1d + pilots8mw_1d,
                 batchmw_2d + pilots8mw_2d,
