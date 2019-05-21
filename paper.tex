@@ -680,7 +680,7 @@ Configurations 2 and 3 in B\'eluga: this is due to the fact that our
 application is not a divisible load, as the model assumes. Extending the
 model beyond divisible loads is easy enough for batch and confirms that the
 observed deviations from the model line come from this assumption (see gray
-line in Fig.~\ref{fig:mwall}. The extended expression for pilots is more complex
+line in Fig.~\ref{fig:mwall}). The extended expression for pilots is more complex
 though.
 
 When
@@ -909,7 +909,7 @@ Spark worker logs, unless saved to network storage, become unavailable after pro
 Although the worker UI is available during program execution, a user must manually create an SSH tunnel
 to each worker node to gain access to them.
 An option is to save the to a shared network storage for future access. This effectively slows down
-the application as the network FS is typically a slower storage than local disk and RAM.
+the application as the network file system is typically a slower storage than local disk and RAM.
 
 When running in client mode, the driver output ends up it standard output/error. 
 However, in cluster mode, the driver output is found stored within
