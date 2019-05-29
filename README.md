@@ -1,5 +1,5 @@
 
-# sparkpilot - pilot scheduler for spark applications on hpc
+# spa - pilot scheduler for spark applications on hpc
 
 # sample usage:
 `pilotspark.py example/standalone/hpc/hpc_pilot_template.sh experiments/code/conditions/hpc_scala_8n1d_pilot.json`
