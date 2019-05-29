@@ -6,6 +6,7 @@ from random import shuffle
 from tempfile import TemporaryFile, NamedTemporaryFile
 import time
 import shutil
+import sys
 
 
 iterations = 5
@@ -26,6 +27,8 @@ batch_double = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_double.json"), "-B"]
 batch_triple = [application, hpc_batch_template,
                 op.join(cond_dir, "hpc_scala_triple.json"), "-B"]
+batch_quad = [application, hpc_batch_template,
+              op.join(cond_dir, "hpc_scala_quadruple.json"), "-B"]
 
 experiments = [
                 {
@@ -46,6 +49,12 @@ experiments = [
                     'batch' : batch_triple,
                     '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n3d_pilot.json")],
                     '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n3d_pilot.json")]
+                },
+                {
+                    'cond' : '4dedicated',
+                    'batch' : batch_quad,
+                    '8pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_8n4d_pilot.json")],
+                    '16pilot' : [application, hpc_pilot_template, op.join(cond_dir, "hpc_scala_16n4d_pilot.json")]
                 }
               ]
 
@@ -80,28 +89,51 @@ def get_results(sp, tmp_file, launch, cond, out_dir):
 
 count = 0 
 while count < iterations :
-    shuffle(experiments)
-    for exps in experiments:
-        print(exps['batch'])
-        print(exps['8pilot'])
-        print(exps['16pilot'])
-        f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']))
-        f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']))
-        f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']))
-        x = Popen(exps['batch'], bufsize=1, stdout=f_batch, stderr=f_batch)
-        y = Popen(exps['8pilot'], bufsize=1, stdout=f_8pilot, stderr=f_8pilot)
-        z = Popen(exps['16pilot'], bufsize=1, stdout=f_16pilot, stderr=f_16pilot)
+    if len(sys.argv) > 1 and sys.argv[1] == "--no_interleave":
+        print("running without interleaving")
+        exps = experiments[2]
 
-        get_results(x, f_batch, "batch", exps['cond'], batch_out)
-        get_results(y, f_8pilot, "8pilot", exps['cond'], pilot8_out)
-        get_results(z, f_16pilot, "16pilot", exps['cond'], pilot16_out)
+        options = [('batch', batch_out), ('8pilot', pilot8_out), ('16pilot', pilot16_out)]
+        shuffle(options)
+        
+        for opt in options:
+            f = NamedTemporaryFile(mode='w+', prefix='{}_'.format(opt[0]), suffix='_{}'.format(exps['cond']))
+            x = Popen(exps[opt[0]], bufsize=1, stdout=f, stderr=f)
+            get_results(x, f, opt[0], exps['cond'], opt[1])
 
-        try:
-            shutil.rmtree(batch_out, ignore_errors=True)
-            shutil.rmtree(pilot8_out, ignore_errors=True)
-            shutil.rmtree(pilot16_out, ignore_errors=True)
+            try:
+                shutil.rmtree(opt[1], ignore_errors=True)
 
-        except Exception as e:
-            print(str(e))
+            except Exception as e:
+                print(str(e))
+        
+    else:
+        shuffle(experiments)
+        for exps in experiments:
+            print(exps['batch'])
+            print(exps['8pilot'])
+            print(exps['16pilot'])
+            f_batch = NamedTemporaryFile(mode='w+', prefix='batch_', suffix='_{}'.format(exps['cond']))
+            f_8pilot = NamedTemporaryFile(mode='w+', prefix='pilot8_', suffix='_{}'.format(exps['cond']))
+            f_16pilot = NamedTemporaryFile(mode='w+', prefix='pilot16', suffix='_{}'.format(exps['cond']))
+            options = [('batch', f_batch, batch_out),
+                       ('8pilot', f_8pilot, pilot8_out),
+                       ('16pilot', f_16pilot, pilot16_out)]
+            shuffle(options)
+            x = Popen(exps[options[0][0]], bufsize=1, stdout=options[0][1], stderr=options[0][1])
+            y = Popen(exps[options[1][0]], bufsize=1, stdout=options[1][1], stderr=options[1][1])
+            z = Popen(exps[options[2][0]], bufsize=1, stdout=options[2][1], stderr=options[2][1])
+
+            get_results(x, options[0][1], options[0][0], exps['cond'], options[0][2])
+            get_results(y, options[1][1], options[1][0], exps['cond'], options[1][2])
+            get_results(z, options[2][1], options[2][0], exps['cond'], options[2][2])
+
+            try:
+                shutil.rmtree(batch_out, ignore_errors=True)
+                shutil.rmtree(pilot8_out, ignore_errors=True)
+                shutil.rmtree(pilot16_out, ignore_errors=True)
+
+            except Exception as e:
+                print(str(e))
 
     count += 1
