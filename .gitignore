@@ -8,3 +8,10 @@ experiments/code/pilot*.log
 experiments/code/hs_err*
 experiments/code/core*
 experiments/code/*applogs*
+figure*.pdf
+example/scala_increment/out_dir/
+example/scala_increment/project/
+example/scala_increment/target/scala-2.11/resolution-cache/
+example/scala_increment/target/streams/
+example/scala_logs/
+example/scala_out/
