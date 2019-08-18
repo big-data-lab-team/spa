@@ -240,7 +240,7 @@ def basic_model(xy1, xy2, xy3, xy4, num_pilots, xlabel, ylabel, system="Beluga",
                               label='Configuration 4')
 
     lgnd.insert(0, batch_symbol)
-    lgnd.extend([model_symbol, d1_symbol, d2_symbol, d3_symbol, d4_symbol])
+    lgnd.extend([d1_symbol, d2_symbol, d3_symbol, d4_symbol, model_symbol])
     ax.legend(handles=lgnd)
     
     get_c = lambda x, y, z=False : (10*(x+20)*125)/y if z else 10*(x+20)*np.ceil(125/y)
