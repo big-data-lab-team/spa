@@ -54,9 +54,9 @@
     commodity infrastructures. This paper evaluates the benefits of pilot
     jobs over traditional batch submission for Apache Spark on HPC
     clusters. Surprisingly, our results show that the speed-up provided by
-    pilot jobs over batch scheduling is moderate to inexistent (0.98 on
+    pilot jobs over batch scheduling is moderate to non-existent (0.98 on
     average) despite the presence of long queuing times. In addition, pilot
-    jobs provide an extra layer of scheduling that complexifies debugging
+    jobs provide an extra layer of scheduling that complicates debugging
     and deployment. We conclude that traditional batch scheduling should
     remain the default strategy to deploy Apache Spark applications on
     HPC clusters.
@@ -77,7 +77,7 @@ In contrast to static resource provisioning, pilot jobs are submitted to
 the infrastructure separately from the application, to provision resources
 on which application tasks will eventually be scheduled. Large pools of
 resources can thus be created, shielding applications from the underlying
-queuing times, failures, and other idiosyncracies. A variety of frameworks
+queuing times, failures, and other idiosyncrasies. A variety of frameworks
 now rely on pilot jobs, including RADICAL-Pilot~\cite{merzky2015radical},
 and recent versions of the Pipeline System for Octave and Matlab
 (PSOM)~\cite{bellec2012pipeline}. The survey in~\cite{turilli2018comprehensive} reviews
@@ -86,7 +86,7 @@ the current pilot-job systems.
 % Goal of the paper
 In this paper, we study the use of pilot jobs to run scientific
 applications with Apache Spark~\cite{zaharia2016apache} on shared HPC
-clusters. The method currently recommended for this purpose involves batch
+clusters. The currently recommended method for this purpose involves batch
 requesting all the
 necessary resources and launching a Standalone Spark cluster once the
 resources have been allocated. This is, for instance, the method used on
@@ -96,7 +96,7 @@ jobs, rather than requesting all the resources at once, a Spark cluster is
 launched with a subset of the resources, and is expanded as more resources
 get allocated. Consistently with previous examples of pilot job
 deployments, we hypothesize that this strategy would reduce queuing times
-by (1) fragmenting resource requirements, and (2) allowing shorter walltime
+by (1) fragmenting resource requirements, and (2) allowing shorter wall-time
 estimates. While there have been some efforts on implementing pilot jobs
 for Apache Spark~\cite{luckow2016hadoop}, research is limited and
 none of the them detail their quantitative effect.
@@ -109,7 +109,7 @@ pipelines by co-locating tasks and data, which provided important
 performance improvements compared to its predecessor Hadoop
 MapReduce~\cite{dean2008mapreduce}. Through the use of RDDs, it also became possible
 to execute iterative workflows -- something not easily doable in older
-frameworks. Schedulers for Spark include its built-in standalone schedule,
+frameworks. Schedulers for Spark include its built-in Standalone scheduler,
 Yet Another Resource Negotiator (YARN~\cite{apache13yet}), and Mesos~\cite{hindman2011mesos}. As a
 result of the sustained growth in data volumes, Apache Spark and other
 Big Data engines are increasingly used for scientific applications,
@@ -170,13 +170,13 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
 
     B\'eluga, on the other hand, is a smaller cluster with 872 available
     nodes. Node memory can range between 92 to 752~GB, with the most common
-    node type having 186G. All nodes contain 2 x Intel Gold 6148 Skylake @
+    node type having 186~GB. All nodes contain 2 x Intel Gold 6148 Skylake @
     2.4~Ghz (40 cores/node) CPU and are connected to each other with a
     100~Gb/s Mellanox Infiniband EDR network. Each non-GPU
     node type contains one 480~GB SSD. 
 
-    It is important to note that these clusters were used in production,
-    that is, concurrently with other users. This allowed us to test the
+    It is important to note that these clusters were used in production.
+    That is, concurrently with other users. This allowed us to test the
     added-value of pilot scheduling in different realistic conditions of queuing
     times. At the time of our experiments, B\'eluga had recently been
     commissioned, resulting in low usage and shorter queuing times overall.
@@ -186,15 +186,15 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
 
     \subsection{Spark Configuration}
 
-    There are three possible cluster managers available to use in Spark applications:
+    There are three possible cluster managers available to use with Spark applications:
     the Standalone cluster manager, YARN and Mesos. The Standalone cluster manager is the
-    most basic cluster manager available and is packaged directly with Spark. YARN is a
-    resource manager designed for the resource management of Hadoop applications. However,
+    most basic cluster manager available and is packaged directly with Spark. The 
+    YARN resource manager is designed for the resource management of Hadoop applications, however,
     it can be used with different types of applications as well. In contrast, Mesos was 
     designed to manage the resources for a variety of applications. As such, it incorporates
     strategies that are more efficient for use with different frameworks making it possible
     to be used as an HPC scheduler. Due to Standalone's lightweight nature and our intent
-    to start Spark clusters per application, we focus on Standalone mode.
+    to start Spark clusters per application, we utilized the Standalone cluster manager.
 
     A Spark cluster is made up of three components: the cluster manager, workers and
     driver. The cluster manager, also known as the Spark master in Standalone mode, is responsible for the
@@ -211,10 +211,10 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     a client to the cluster. The cluster deploy-mode, however, runs the driver within
     a worker process. Such a configuration is practical when the driver program
     is deployed on a machine not co-located in the cluster to reduce network 
-    latency between workers and driver. The cluster deploy mode also has the \texttt{supervise}
+    latency between workers and the driver. The cluster deploy mode also has the \texttt{supervise}
     feature which allows the driver to be restarted in case of failure.
     This is particularly useful for
-    pilot-based overlay clusters where the running driver may fail due to walltime expiration.
+    pilot-based overlay clusters where the running driver may fail due to wall-time expiration.
     Using the Standalone cluster manager, client mode is supported in all APIs, whereas cluster mode is
     only available for applications using the Scala, Java and R APIs.
 
@@ -263,7 +263,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     inspired by the template provided by Compute Canada to launch Spark applications 
     on Slurm, \href{https://docs.computecanada.ca/wiki/Apache\_Spark/en}{available here}.
     The template operates as follows: certain resource requirements are requested by
-    the user (e.g. walltime, amount of memory per node, number of CPUs per task, number 
+    the user (e.g. wall-time, amount of memory per node, number of CPUs per task, number 
     of nodes and number of tasks per node). Once these resources are allocated, a 
     master is started on one of the requested node resources. Then, after the master
     has successfully started, the workers are started on all nodes. Multiple worker
@@ -275,7 +275,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     available memory on the node, to allow for offheap space. 
     The Spark deploy mode selected for the batch template is client mode. We selected this
     deploy mode over cluster mode as driver recovery would not be required in batch in the
-    case of walltime expiration, as all the allocated resources will expire at the same time.
+    case of wall-time expiration, as all the allocated resources will expire at the same time.
     Moreover, many scientific applications are written in Python, which cannot use cluster mode using
     the Standalone resource manager. Should pilot scheduling using cluster mode significantly reduce
     queuing time compared to batch scheduling using client mode, it would provide enough justification to extend
@@ -284,40 +284,40 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     The pilot submission template is similar to that of the batch template, although,
     each pilot will start its own Spark master and worker. However, there will only be one
     pilot which will start the driver process. The pilot selected to start the driver is the first one
-    that attempts to do so by way of lockfile.
+    that attempts to do so by means of a lockfile.
     The reason for 
     which each pilot starts its own master is to ensure the fault tolerance of the 
     masters. In this configuration, should the active master be killed, one
     of the stand-by masters can takeover and the application may be able to 
     resume if single-node recovery is set. Such a configuration is particularly favourable in pilot scheduling 
-    scenarios as node failures may be more frequent due to walltime expiration.
+    scenarios as node failures may be more frequent due to wall-time expiration.
     Additionally, the Spark deploy mode of the driver was selected to be cluster deploy mode.
     This would not only allow the driver to be executed directly on one of the workers,
     but also allow us to make the driver fault-tolerant through the
     \texttt{supervise} mode, which is only available in cluster deploy. As
     with the masters, it is particularly important to have a fault-tolerant
-    driver in pilot-scheduling scenarios due to possible walltime
+    driver in pilot-scheduling scenarios due to possible wall-time
     expiration.
     Should pilots be idle for a certain duration, the
-    pilots will terminate themselves such as to not hog resources.
+    pilots will terminate themselves in order to not hog resources.
     % \TG{It should be explained before that one of the interests
-    % of pilots is to ``play'' with shorter walltimes}. \TG{It would also be
+    % of pilots is to ``play'' with shorter wall-times}. \TG{It would also be
     % nice to have runs where pilots 
-    % have shorter walltimes, to see if queuing times are shorter too.}
+    % have shorter wall-times, to see if queuing times are shorter too.}
 
     Although we start a master on each pilot, we have not incorporated the master recovery function
-    for our experiments. This feature is, however, important and should be incorporated in pilot schedulers
-    were any nodes can fail by design.
+    for our experiments. However, this feature is important and should be incorporated in pilot schedulers
+    where any nodes can fail by design.
 
     Due to the differences in deploy modes between batch and pilot submission, 
     batch will always inevitably have one more worker than pilot. This is because
     in cluster deploy, which pilot uses, the driver occupies a worker, whereas in
-    client deploy, the driver is separate from any worker.
+    client deploy, the driver is a distinct process.
 
     Both of these Slurm templates are launched within a Python application called
     \textit{SPA}. The templates are used in conjunction with JSON configuration 
     file and passed to the \href{https://github.com/brentp/slurmpy}{SlurmPy} library within \textit{SPA}.
-    The \textit{SPA} application, all the while ensures that all is preconfigured
+    The \textit{SPA} application ensures that all is preconfigured
     correctly before passing it to SlurmPy. It also ensures that enough pilots are
     launched, maintains track of the running/queued pilots, and launches additional
     pilots if there are less pilots than requested by the user in the Slurm queue.
@@ -340,17 +340,16 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
                 \EndFor                                                                      
             \end{algorithmic}                                                                
         \end{algorithm}
-    To determine the added value of pilot scheduling over batch scheduling of Spark
+    To determine the added value of pilot over batch scheduling of Spark
     applications, we required a Spark application operating on a large dataset with
     an important processing time to emulate what would be the average requirements
     of a scientific Spark application. For this, we created a synthetic application 
-    that would process the Big Brain~\cite{amunts2013bigbrain}, a 76~GB 3D histological
-    image of a human brain. The algorithm is a chain of map transformations that
-    at each transformation increment the voxels of the image by 1 (see Algorithm~\ref{alg:incrementation}).
-    We chose such a synthetic algorithm
+    that would process the 40~$\mu$m BigBrain~\cite{amunts2013bigbrain}, a 76~GB 3D histological
+    image of a human brain. The algorithm is a chain of map transformations that,
+    at each transformation, increment the voxels of the image by 1 (see Algorithm~\ref{alg:incrementation}).
+    We selected a synthetic algorithm
     as the focus of our experiments is pilot scheduling and not the application in
-    itself. Furthermore, this algorithm enabled us to have control over the task duration
-    which was representative of scientific applications. Additionally, it was important
+    and of itself. Furthermore, this algorithm enabled us to have control over the task duration and make it representative of scientific applications. Additionally, it was important
     that the overall application duration did not vary between the different levels of
     parallelism within our experiments. Being able to adjust the task duration based on
     level of parallelism allowed us to achieve this.
@@ -358,7 +357,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     Spark cluster fault-tolerance is important in determining the suitability of
     pilot-jobs for Spark applications on HPC. Executing jobs on a shared cluster may
     result in a variety of failures. Pilot jobs may be more likely to fail as a result of
-    underestimation of resources (e.g. walltimes) and therefore should be fault-tolerant
+    underestimation of resources (e.g. wall-times), and therefore, should be fault-tolerant
     to master, worker and driver failures. Although built-in fault-tolerance was not
     investigated in this paper, we want to ensure that the environment is set up in such
     a way that Spark's fault-tolerance configuration could easily be set should our 
@@ -366,7 +365,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     Fault-tolerance of the driver is only possible in cluster deploy mode, however,
     when using Spark's Standalone scheduler, this mode is not available for Python 
     applications. It is for this reason that our synthetic application is written
-    in Scala. Nevertheless, cluster deploy mode is possible for Python application
+    in Scala. Nevertheless, cluster deploy mode is available for PySpark applications
     using YARN or Mesos schedulers.
 
 
@@ -387,7 +386,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     where:
     \begin{itemize}
         \item $M$ is the makespan of the application
-        \item $C$ is the total CPU time of the application
+        \item $C$ is the total wall-time of the application
         \item $W$ is the \emph{average} number of Spark workers throughout the execution
     \end{itemize}
     The average number of workers $W$ allows the model to take into account
@@ -399,7 +398,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     application is not subject to any scheduling or queuing time, the
     average number of workers equals the number of workers requested. 
 
-    Therefore, assuming a fixed total CPU time, the relation
+    Therefore, assuming a fixed total wall-time, the relation
     between batch and pilot jobs can be represented as:
     \begin{equation}
         \frac{M_{batch}}{M_{pilot}} = \frac{W_{pilot}}{W_{batch}}\label{eq:makespancomp}
@@ -496,7 +495,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
         batch scheduling, we needed to compare both strategies given various resource
         requirements. It is expected that large batch requests will stay in the 
         resource queue longer than multiple pilot requests that ultimately use up
-        the same amount of resources as each individual pilot requests less resources at
+        the same amount of resources, as each individual pilot requests fewer resources at
         a time. We therefore used four resource configurations to investigate this
         hypothesis (Table~\ref{table:dedicatednodes}).
 
@@ -505,10 +504,10 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
        node. On the other hand, for all configurations, we ran our experiments
        with 8 and 16 pilots. Experimental conditions can be seen in Table~\ref{table:conditions}.
 
-       As the focus of our experiments here is to measure the impact pilot scheduling
-       has on queueing times, we wanted to ensure that our walltime estimates would
+       As the focus of our experiments is to measure the impact pilot scheduling
+       has on queueing times, we wanted to ensure that our wall-time estimates would
        be consistent for each experimental condition. Therefore, we adjusted task 
-       delay based on the maximum level of parallelism to ensure that walltimes would
+       delay based on the maximum level of parallelism to ensure that wall-times would
        not need to be readjusted for each configuration. Given utmost parallelism,
        the sleep delay added would amount to a makespan of 1 hour regardless
        of configuration. The actual processing time of the application, however, 
@@ -516,7 +515,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
        8 in Algorithm~\ref{alg:incrementation})
        in the sleep delay. Due to slight variability in task durations between experiments, in 
        addition to variability in application parallelism due to queuing times of each pilot Slurm job, 
-       we have set the walltime to be 2h30 to ensure experiment completion.
+       we set the Slurm allocation wall-time to be 2h30 to ensure experiment completion.
 
        For each configuration, all three execution modes (batch, 8 pilots,
        16 pilots) were executed in parallel to ensure that the status of
@@ -538,7 +537,7 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
     % maybe remove
     %\subsection{Pipeline robustness}
     %    While nodes failures can occur for various reasons, underestimation of 
-    %    walltime may lead to early node termination in pilot scheduling systems.
+    %    wall-time may lead to early node termination in pilot scheduling systems.
     %    Therefore, it is crucial for the overlay cluster within the pilot system
     %    to be robust to node failures. In this series of experiments, we investigate
     %    Spark's fault-tolerance with respect to worker, master and driver termination.
@@ -560,13 +559,13 @@ relevant of pilot jobs for Apache Spark applications on HPC clusters.
 As can be seen in both Figures~\ref{fig:makespansbeluga} and~\ref{fig:makespanscedar}, pilots 
 generally did not bring any performance improvement to the execution of Spark workloads
 on either system. In B\'eluga and Cedar, 16 pilots were generally slower than batch except for a 
-few occurrencs. When 16 pilots were faster, it was generally either very slight, or, as expected,
+few occurrences. When 16 pilots were faster, it was generally either very slight, or, as expected,
 when batch queuing times were very large. The maximum speedup achieved
 was approximately 5.6~x for 8 and 16 pilots on B\'eluga and 2.6~x on Cedar. 
-It is only in Configuration~3 (Figure~\ref{fig:beluga4}), on B\'eluga,
+It is only in Configuration~3 (Figure~\ref{fig:beluga4}) on B\'eluga
 that we spot any large speedups, however, it generally remains that
-pilots are slightly slower, even in Configuration~3. The same can be said about Cedar, however,
-it occured with Configuration~4 instead of 3. On average, pilots were up to 0.11~x slower on B\'eluga and
+pilots are slightly slower, even in this configuration. The same can be said about Cedar, however,
+it occurred with Configuration~4 instead of 3. On average, pilots were up to 0.11~x slower on B\'eluga and
 0.17~x slower on Cedar (see Table~\ref{table:speedup}), both of which occurred when using 16 pilots.
 The only times when pilots were found to be, on average, faster, was in Configuration~3 on B\'eluga
 and Configuration~4 on Cedar where the speedup was found to reach a max of 1.46 for 8 pilots on 
@@ -679,7 +678,7 @@ pilots occasionally deviated from the model line, in particular
 Configurations 2 and 3 in B\'eluga: this is due to the fact that our
 application is not a divisible load, as the model assumes. Extending the
 model beyond divisible loads is easy enough for batch and confirms that the
-observed deviations from the model line come from this assumption (see gray
+observed deviations from the model line come from this assumption (see grey
 line in Fig.~\ref{fig:mwall}). The extended expression for pilots is more complex
 though.
 
@@ -845,18 +844,18 @@ had to be place on B\'eluga's medium memory nodes. B\'eluga has 172 low memory n
 low memory nodes are less frequent that medium memory nodes, it is possible that this
 may have increased the overall queuing times of the pilots. However, Cedar's basic
 node has enough memory to for all batch and pilot configuration, therefore, this could not
-have affected queuing time for Cedar.
+have affected queuing times in Cedar.
 
 Although queuing time is largely responsible for makespan variations, it is not
-always entirely responsible for the difference. Sometimes there are errors related
+always entirely responsible for the differences. Sometimes there are errors related
 to executors not properly starting. These occurrences lead to the 
 application being processed entirely with a smaller number of available executors. As the task
-delay added considers the maximum amount of parallel workers, functioning with less total workers
+delay added assumes the maximum number of parallel workers, functioning with less total workers
 will significantly affect makespan. However, as seen in Figure~\ref{fig:mwall},
 pilots are slower even with the same amount of average workers. A potential reasoning for this
 may be the worker registration delay and the time required to transfer data
 over after the application has already started. In batch scheduling, all workers are started in
-parallel and the data is transferred automatically at the beginning of the pipeline as the maximum amount
+parallel and the data is transferred automatically at the beginning of the pipeline, as the maximum amount
 of parallelism is available at driver start time. Pilots, on the other hand, may start workers in parallel,
 but not necessarily all will be started at the same time (i.e. delays in starting the workers once resources
 have been allocated). This means that the entire 
@@ -871,13 +870,13 @@ a driver only once.
 
 The motivation to use pilots, however, is dynamic scheduling on HPC clusters. While we
 investigated the queuing time differences with respect to differences in available resources,
-the walltimes were kept static. Had walltime been underestimated to the point where the Slurm jobs
+the wall-times were kept static. Had wall-time been underestimated to the point where the Slurm jobs
 would terminate prior to application completion, pilots might have been preferable to batch
 as batch scheduling has no mechanism to restart. Even if such a mechanism was in place, the entire
 cluster would be shutdown and need to restart, which has additional overheads. With pilots, as long as 
-there was at least one pilot alive, it would be possible to maintain the cluster and add additional pilots.
-Spark provides built-it fault-tolerance for not only the workers, but the master and driver as well. However,
-it is also likely that with faster queuing times, all resources would be allocated at the same time. If walltime
+there is at least one pilot alive, it would be possible to maintain the cluster and add additional pilots.
+Spark provides built-in fault-tolerance for not only the workers, but the master and driver as well. However,
+it is also likely that with faster queuing times, all resources would be allocated at the same time. If wall-time
 were to be underestimated, in this case, checkpointing and restarting the entire application from the last
 checkpoint would be the only option. This too has limitations as the last checkpoint may not be recent,
 necessitating significant amounts of recomputation. It
@@ -887,7 +886,7 @@ for more chances for the application to reach completion without failing entirel
 Many failures can be found, particularly with regards to the pilots. Most
 of these have been a result of Spark failing to start properly. The driver
 either would not return a submission ID after being started, or would
-remain in \texttt{SUBMITTED} status until the walltime expiration, having
+remain in \texttt{SUBMITTED} status until the wall-time expiration, having
 not processed any data. As these errors become fewer with increased
 resources, it is possible they are entirely related to lack of resources.
 Furthermore, it may also explain why batch submission is more frequently successful. Not
@@ -904,14 +903,14 @@ running on a shared HPC cluster. Either the resources were down, or other users 
 have been using them, resulting in the resources being unavailable to our
 application.
 
-Running a Spark cluster atop of a Slurm allocation complexifies debugging, particularly if the application runs in cluster mode.
+Running a Spark cluster atop of a Slurm allocation complicates debugging, particularly if the application runs in cluster mode.
 Spark worker logs, unless saved to network storage, become unavailable after program execution.
 Although the worker UI is available during program execution, a user must manually create an SSH tunnel
 to each worker node to gain access to them.
 An option is to save the to a shared network storage for future access. This effectively slows down
-the application as the network file system is typically a slower storage than local disk and RAM.
+the application as the network file system is typically a slower storage than local storage.
 
-When running in client mode, the driver output ends up it standard output/error. 
+When running in client mode, the driver output ends up in standard output/error. 
 However, in cluster mode, the driver output is found stored within
 the worker logs, which means the driver logs are also inaccessible without 
 worker logs being written to network storage. Some HPC clusters
@@ -940,7 +939,7 @@ including dealing with fine task granularity or enforcing data locality.
 Pilot jobs naturally remain useful in that respect.
 
 Pilots are meant to allow for underestimation of resources, particularly
-walltime, which would not be known to the user prior to execution. In its
+wall-time, which would not be known to the user prior to execution. In its
 current state, \texttt{SPA} is not able to evaluate that functionality.
 Further experiments on master fault-tolerance, driver recovery, and
 checkpointing will need to be conducted to determine if pilot jobs are even
